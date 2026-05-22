@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     serpapi_api_key: SecretStr | None = Field(default=None, validation_alias="SERPAPI_API_KEY")
 
     database_url: SecretStr = Field(
-        default=SecretStr("postgresql+psycopg://postgres:postgres@127.0.0.1:5432/persona_graph"),
+        default=SecretStr("postgresql+psycopg://app:change_me_123@127.0.0.1:5432/app_db"),
         validation_alias="DATABASE_URL",
     )
     redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias="REDIS_URL")

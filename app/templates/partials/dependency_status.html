@@ -1,0 +1,9 @@
+{% for name, check in checks.items() %}
+<div class="dependency-row">
+  <span>{{ name }}</span>
+  <strong class="state state-{{ check.status }}">{{ check.status }}</strong>
+  {% if check.message %}
+  <small>{{ check.message }}</small>
+  {% endif %}
+</div>
+{% endfor %}

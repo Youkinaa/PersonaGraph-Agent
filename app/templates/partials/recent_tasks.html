@@ -1,0 +1,7 @@
+{% if task_runs %}
+  {% for task_run in task_runs %}
+    {% include "partials/task_run.html" %}
+  {% endfor %}
+{% else %}
+<p class="empty-state">No task runs yet.</p>
+{% endif %}

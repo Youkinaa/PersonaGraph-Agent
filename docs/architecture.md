@@ -15,14 +15,19 @@ and workflow orchestration, then composes them through task-specific workflows.
 - Cache and task broker: Redis.
 - Background jobs: Celery.
 
-## Phase 0 Runtime
+## Phase 1 Runtime
 
 ```text
 Browser
   -> FastAPI page routes
   -> Jinja2 templates
   -> HTMX partial endpoints
+  -> PostgreSQL for state
+  -> Redis broker
+  -> Celery worker
 ```
 
-The health endpoint intentionally does not connect to infrastructure yet. Phase
-1 will add real dependency checks after database and task state are introduced.
+PostgreSQL is the source of truth for platform state. Redis is used as the
+Celery broker and result backend. Celery is reserved for work that should live
+outside the request lifecycle, such as document parsing, indexing, memory
+consolidation, and proactive jobs in later phases.

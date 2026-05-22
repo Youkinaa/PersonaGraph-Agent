@@ -119,6 +119,12 @@ p {
   cursor: pointer;
 }
 
+.button-secondary {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--accent-dark);
+}
+
 .button:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
@@ -174,6 +180,73 @@ p {
   margin: 0;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dependency-stack,
+.task-stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dependency-row,
+.task-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.dependency-row {
+  display: grid;
+  grid-template-columns: 110px 96px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.dependency-row small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.state {
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.state-ok,
+.state-succeeded {
+  color: var(--accent);
+}
+
+.state-error,
+.state-failed {
+  color: #b42318;
+}
+
+.task-card h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.task-meta {
+  margin-top: 14px;
+}
+
+.task-meta dd {
+  overflow-wrap: anywhere;
+}
+
+.empty-state {
+  margin-top: 0;
+}
+
 @media (max-width: 760px) {
   .topbar {
     align-items: flex-start;
@@ -193,5 +266,9 @@ p {
 
   .button {
     width: 100%;
+  }
+
+  .dependency-row {
+    grid-template-columns: 1fr;
   }
 }

@@ -25,11 +25,32 @@ Current placeholders:
 
 ## Phase 1: Database And Task State
 
-Planned next:
+Implemented in this phase:
 
 - PostgreSQL connection.
 - SQLAlchemy models.
 - Alembic migrations.
 - Redis connectivity check.
 - Minimal Celery worker.
-- `workflow_runs`, `task_runs`, `messages`, `documents` base tables.
+- `workflow_runs`, `task_runs`, `messages`, `documents`, `document_sections`,
+  and `document_chunks` base tables.
+- `/health/dependencies` endpoint.
+- `tasks.ping` background task.
+- HTMX task controls on the workspace page.
+
+Current placeholders:
+
+- Celery only runs a simple ping task.
+- Document tables exist, but upload and parsing are not implemented yet.
+- `users` is schema-only; authentication is intentionally deferred.
+
+## Phase 2: Document Ingestion
+
+Planned next:
+
+- Upload page and API.
+- File persistence.
+- Document parse state transitions.
+- Parent section splitting.
+- Child chunk splitting.
+- Celery-backed parsing task.

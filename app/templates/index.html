@@ -23,20 +23,51 @@
   </article>
 
   <article class="panel">
-    <h2>Next Build Slice</h2>
-    <dl class="compact-list">
-      <div><dt>Database</dt><dd>PostgreSQL + SQLAlchemy + Alembic</dd></div>
-      <div><dt>Runtime</dt><dd>Redis + Celery worker</dd></div>
-      <div><dt>State</dt><dd>workflow_runs, tasks, messages</dd></div>
-    </dl>
+    <h2>Task State</h2>
+    <p>PostgreSQL stores task records while Redis and Celery move background work.</p>
+    <div class="actions">
+      <button
+        class="button"
+        hx-post="/partials/tasks/ping"
+        hx-target="#task-output"
+        hx-swap="afterbegin"
+      >
+        Enqueue Ping
+      </button>
+      <button
+        class="button button-secondary"
+        hx-get="/partials/tasks/recent"
+        hx-target="#task-output"
+        hx-swap="innerHTML"
+      >
+        Recent
+      </button>
+    </div>
+    <div id="task-output" class="task-stack"></div>
   </article>
 
   <article class="panel">
-    <h2>Infrastructure</h2>
+    <h2>Dependency Checks</h2>
+    <p>Phase 1 validates the app can reach PostgreSQL and Redis.</p>
+    <div class="actions">
+      <button
+        class="button"
+        hx-get="/partials/dependency-status"
+        hx-target="#dependency-status"
+        hx-swap="innerHTML"
+      >
+        Check
+      </button>
+    </div>
+    <div id="dependency-status" class="dependency-stack"></div>
+  </article>
+
+  <article class="panel panel-wide">
+    <h2>Next Build Slice</h2>
     <dl class="compact-list">
-      <div><dt>Vector</dt><dd>Milvus</dd></div>
-      <div><dt>Keyword</dt><dd>Elasticsearch</dd></div>
-      <div><dt>Graph</dt><dd>Neo4j</dd></div>
+      <div><dt>Documents</dt><dd>Upload, parse status, parent sections, child chunks</dd></div>
+      <div><dt>Workers</dt><dd>Move document parsing and indexing into background jobs</dd></div>
+      <div><dt>Validation</dt><dd>Show document and task state in the workbench</dd></div>
     </dl>
   </article>
 </section>

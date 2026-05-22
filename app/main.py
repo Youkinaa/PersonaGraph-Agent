@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.api.health import router as health_router
+from app.api.tasks import router as task_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import RequestIdMiddleware, configure_logging
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=str(settings.static_dir)), name="static")
     app.include_router(health_router)
+    app.include_router(task_router)
     app.include_router(page_router)
 
     return app

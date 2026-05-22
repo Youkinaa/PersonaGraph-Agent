@@ -1,0 +1,31 @@
+{% if task_run %}
+<article
+  class="task-card"
+  id="task-run-{{ task_run.id }}"
+  {% if task_run.status in ["queued", "running"] %}
+  hx-get="/partials/tasks/{{ task_run.id }}"
+  hx-trigger="every 2s"
+  hx-swap="outerHTML"
+  {% endif %}
+>
+  <div>
+    <span class="eyebrow">{{ task_run.task_name }}</span>
+    <h3>{{ task_run.status }}</h3>
+  </div>
+  <dl class="compact-list task-meta">
+    <div><dt>ID</dt><dd>{{ task_run.id }}</dd></div>
+    <div><dt>Celery</dt><dd>{{ task_run.celery_task_id or "not assigned" }}</dd></div>
+    {% if task_run.result %}
+    <div><dt>Result</dt><dd>{{ task_run.result }}</dd></div>
+    {% endif %}
+    {% if task_run.error_message %}
+    <div><dt>Error</dt><dd>{{ task_run.error_message }}</dd></div>
+    {% endif %}
+  </dl>
+</article>
+{% else %}
+<article class="task-card">
+  <h3>missing</h3>
+  <p>The task run was not found.</p>
+</article>
+{% endif %}

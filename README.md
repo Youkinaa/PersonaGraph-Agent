@@ -18,10 +18,30 @@ Current implementation:
 - Request logging with request ids.
 - Central error handlers.
 
-Not implemented yet:
+## Phase 1
 
-- PostgreSQL models and migrations.
-- Redis / Celery runtime.
+Current implementation:
+
+- PostgreSQL connection through SQLAlchemy.
+- Alembic migration for core platform tables.
+- Redis connectivity check.
+- Celery app and a minimal `tasks.ping` worker task.
+- `task_runs` status lifecycle: `queued -> running -> succeeded / failed`.
+- API endpoints for dependency health and task status.
+- HTMX controls for dependency checks and Celery ping tasks.
+
+Core tables created in Phase 1:
+
+- `users`
+- `documents`
+- `document_sections`
+- `document_chunks`
+- `workflow_runs`
+- `messages`
+- `task_runs`
+
+Still not implemented yet:
+
 - Milvus / Elasticsearch / Neo4j indexing.
 - LangGraph workflows.
 - Memory lifecycle.
@@ -43,6 +63,25 @@ Open:
 ```text
 http://127.0.0.1:8000
 http://127.0.0.1:8000/health
+http://127.0.0.1:8000/health/dependencies
+```
+
+Run the Celery worker in a second terminal. On Windows, use the `solo` pool:
+
+```powershell
+python -m celery -A app.workers.celery_app worker --pool=solo --loglevel=info
+```
+
+Apply database migrations:
+
+```powershell
+python -m alembic upgrade head
+```
+
+Trigger a background ping task:
+
+```powershell
+Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/tasks/ping
 ```
 
 ## Docker Infrastructure
@@ -123,7 +162,8 @@ Required infrastructure variables for later phases:
 
 ## Verification
 
-Phase 0 verifies the application foundation, not the full RAG stack.
+Phase 1 verifies the application foundation, database state, Redis connectivity,
+and one Celery background task. It still does not verify the full RAG stack.
 
 Run tests:
 
@@ -146,9 +186,20 @@ Invoke-RestMethod http://127.0.0.1:8000/health
 Expected fields:
 
 - `status`: `ok`
-- `phase`: `phase_0_foundation`
+- `phase`: `phase_1_task_state`
 - `app.has_llm_api_key`: whether `.env` contains an LLM key.
 - `app.has_serpapi_api_key`: whether `.env` contains a SerpAPI key.
+
+Verify dependencies:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health/dependencies
+```
+
+Expected:
+
+- `checks.database.status`: `ok`
+- `checks.redis.status`: `ok`
 
 Manual browser checks:
 
@@ -156,5 +207,9 @@ Manual browser checks:
 - `http://127.0.0.1:8000/health` returns JSON.
 - The `Refresh` button on the workspace page updates the status panel through
   HTMX.
+- The `Check` button validates PostgreSQL and Redis.
+- The `Enqueue Ping` button creates a task row and lets the Celery worker mark
+  it as succeeded.
 
-Phase 1 will add real checks for PostgreSQL, Redis, and Celery.
+Phase 2 will add document upload, parsing status, parent sections, and child
+chunks.
