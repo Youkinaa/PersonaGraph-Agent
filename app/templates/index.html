@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workspace-grid">
+  <article class="panel panel-wide">
+    <div class="panel-header">
+      <div>
+        <h2>Platform Foundation</h2>
+        <p>FastAPI, Jinja2, HTMX, typed settings, request logging, and health checks.</p>
+      </div>
+      <button
+        class="button"
+        hx-get="/partials/phase-status"
+        hx-target="#phase-status"
+        hx-swap="innerHTML"
+      >
+        Refresh
+      </button>
+    </div>
+    <div id="phase-status" class="status-grid">
+      {% include "partials/phase_status.html" %}
+    </div>
+  </article>
+
+  <article class="panel">
+    <h2>Next Build Slice</h2>
+    <dl class="compact-list">
+      <div><dt>Database</dt><dd>PostgreSQL + SQLAlchemy + Alembic</dd></div>
+      <div><dt>Runtime</dt><dd>Redis + Celery worker</dd></div>
+      <div><dt>State</dt><dd>workflow_runs, tasks, messages</dd></div>
+    </dl>
+  </article>
+
+  <article class="panel">
+    <h2>Infrastructure</h2>
+    <dl class="compact-list">
+      <div><dt>Vector</dt><dd>Milvus</dd></div>
+      <div><dt>Keyword</dt><dd>Elasticsearch</dd></div>
+      <div><dt>Graph</dt><dd>Neo4j</dd></div>
+    </dl>
+  </article>
+</section>
+{% endblock %}

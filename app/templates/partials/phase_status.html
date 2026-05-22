@@ -1,0 +1,16 @@
+<div class="metric">
+  <span>App</span>
+  <strong>{{ summary.app_name if summary is defined else settings.app_name }}</strong>
+</div>
+<div class="metric">
+  <span>Version</span>
+  <strong>{{ summary.app_version if summary is defined else settings.app_version }}</strong>
+</div>
+<div class="metric">
+  <span>LLM Key</span>
+  <strong>{{ "configured" if (summary.has_llm_api_key if summary is defined else settings.llm_api_key) else "missing" }}</strong>
+</div>
+<div class="metric">
+  <span>Search Key</span>
+  <strong>{{ "configured" if (summary.has_serpapi_api_key if summary is defined else settings.serpapi_api_key) else "missing" }}</strong>
+</div>
