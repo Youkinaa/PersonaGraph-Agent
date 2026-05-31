@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workspace-grid">
+  <article class="panel">
+    <h2>Track Application</h2>
+    <form class="form-stack" method="post" action="/applications">
+      <label>Job
+        <select name="job_posting_id" required>
+          {% for job in job_postings %}
+          <option value="{{ job.id }}">{{ job.title }}{% if job.company %} · {{ job.company }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Resume Version
+        <select name="resume_version_id">
+          <option value="">None</option>
+          {% for version in resume_versions %}
+          <option value="{{ version.id }}">{{ version.profile.title }} · {{ version.version_label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Status
+        <select name="status">
+          <option value="interested">interested</option>
+          <option value="applied">applied</option>
+          <option value="interviewing">interviewing</option>
+          <option value="offer">offer</option>
+          <option value="rejected">rejected</option>
+        </select>
+      </label>
+      <label>Source <input name="source" placeholder="manual / referral / company page" /></label>
+      <label>Next Action <input type="date" name="next_action_at" /></label>
+      <label>Notes <textarea name="notes" rows="4"></textarea></label>
+      <button class="button" type="submit" {% if not job_postings %}disabled{% endif %}>Save</button>
+    </form>
+  </article>
+
+  <article class="panel panel-wide">
+    <h2>Applications</h2>
+    <div class="item-list">
+      {% for application in applications %}
+      <article class="item-row">
+        <div>
+          <strong>{{ application.job_posting.title }}</strong>
+          <span>{{ application.job_posting.company or "Unknown company" }} · {{ application.notes or "No notes" }}</span>
+        </div>
+        <small>{{ application.status }}</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No applications yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

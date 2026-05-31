@@ -47,7 +47,7 @@ Current placeholders:
 
 ## Phase 2: Career Domain Schema
 
-Planned:
+Implemented:
 
 - `resume_profiles`
 - `resume_versions`
@@ -69,6 +69,13 @@ User-facing pages:
 - `/applications`
 - `/goals`
 - `/notifications`
+
+Current placeholders:
+
+- Manual resume and JD entry only; file upload is not implemented yet.
+- Job subscriptions are not scheduled yet.
+- Notifications are manually created; proactive generation starts later.
+- Career and learning goals are stored, not planned by an Agent yet.
 
 ## Phase 3: Resume / JD Document Ingestion
 

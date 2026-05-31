@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workspace-grid">
+  <article class="panel">
+    <h2>Career Goal</h2>
+    <form class="form-stack" method="post" action="/goals/career">
+      <label>Title <input name="title" required placeholder="Land an AI Agent internship" /></label>
+      <label>Target Role <input name="target_role" placeholder="AI Agent Intern" /></label>
+      <label>Target Date <input type="date" name="target_date" /></label>
+      <label>Description <textarea name="description" rows="4"></textarea></label>
+      <label>Success Criteria <textarea name="success_criteria" rows="4"></textarea></label>
+      <button class="button" type="submit">Create</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Learning Goal</h2>
+    <form class="form-stack" method="post" action="/goals/learning">
+      <label>Title <input name="title" required placeholder="Build production RAG skills" /></label>
+      <label>Target Skill <input name="target_skill" placeholder="GraphRAG" /></label>
+      <label>Target Date <input type="date" name="target_date" /></label>
+      <label>Description <textarea name="description" rows="4"></textarea></label>
+      <label>Success Criteria <textarea name="success_criteria" rows="4"></textarea></label>
+      <button class="button" type="submit">Create</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Career Goals</h2>
+    <div class="item-list">
+      {% for goal in career_goals %}
+      <article class="item-row">
+        <div>
+          <strong>{{ goal.title }}</strong>
+          <span>{{ goal.target_role or "No target role" }}</span>
+        </div>
+        <small>{{ goal.status }}</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No career goals yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel">
+    <h2>Learning Goals</h2>
+    <div class="item-list">
+      {% for goal in learning_goals %}
+      <article class="item-row">
+        <div>
+          <strong>{{ goal.title }}</strong>
+          <span>{{ goal.target_skill or "No target skill" }}</span>
+        </div>
+        <small>{{ goal.status }}</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No learning goals yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

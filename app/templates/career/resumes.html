@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workspace-grid">
+  <article class="panel">
+    <h2>Resume Profile</h2>
+    <form class="form-stack" method="post" action="/resumes/profiles">
+      <label>Title <input name="title" required placeholder="AI Agent Intern Resume" /></label>
+      <label>Target Role <input name="target_role" placeholder="AI Agent Intern" /></label>
+      <label>Summary <textarea name="summary" rows="4"></textarea></label>
+      <button class="button" type="submit">Create</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Resume Version</h2>
+    <form class="form-stack" method="post" action="/resumes/versions">
+      <label>Profile
+        <select name="profile_id" required>
+          {% for profile in profiles %}
+          <option value="{{ profile.id }}">{{ profile.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Version <input name="version_label" value="v1" /></label>
+      <label>Content <textarea name="content" rows="6"></textarea></label>
+      <label class="check-row"><input type="checkbox" name="is_primary" value="true" /> Primary version</label>
+      <button class="button" type="submit" {% if not profiles %}disabled{% endif %}>Add Version</button>
+    </form>
+  </article>
+
+  <article class="panel panel-wide">
+    <h2>Profiles</h2>
+    <div class="item-list">
+      {% for profile in profiles %}
+      <article class="item-row">
+        <div>
+          <strong>{{ profile.title }}</strong>
+          <span>{{ profile.target_role or "No target role" }}</span>
+        </div>
+        <small>{{ profile.versions | length }} versions</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No resume profiles yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

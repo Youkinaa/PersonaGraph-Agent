@@ -102,6 +102,30 @@ Still not implemented yet:
 - Memory lifecycle.
 - Skill runtime.
 
+## Phase 2
+
+Implemented:
+
+- Career domain tables for resumes, jobs, applications, goals, notifications,
+  and proactive events.
+- Alembic migration `0002_career_domain`.
+- Career domain service layer.
+- JSON API under `/api/career`.
+- Server-rendered pages for:
+  - `/resumes`
+  - `/jobs`
+  - `/applications`
+  - `/goals`
+  - `/notifications`
+
+Current simplifications:
+
+- Resume versions and JDs can be entered manually; file upload starts in the
+  next phase.
+- Job subscriptions are stored but not scheduled yet.
+- Notifications can be created manually; proactive generation starts later.
+- Career goals and learning goals are stored but not planned by LangGraph yet.
+
 ## Local Run
 
 Create a virtual environment, install dependencies, then start the app:
@@ -218,7 +242,7 @@ python -m alembic current
 Expected:
 
 ```text
-0001_phase_1 (head)
+0002_career_domain (head)
 ```
 
 Verify dependencies:
@@ -246,16 +270,27 @@ Expected:
 - `status`: `succeeded`
 - `result.message`: `pong`
 
+Verify career pages:
+
+```text
+http://127.0.0.1:8000/resumes
+http://127.0.0.1:8000/jobs
+http://127.0.0.1:8000/applications
+http://127.0.0.1:8000/goals
+http://127.0.0.1:8000/notifications
+```
+
+Verify career APIs:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/career/resumes
+Invoke-RestMethod http://127.0.0.1:8000/api/career/jobs
+Invoke-RestMethod http://127.0.0.1:8000/api/career/applications
+Invoke-RestMethod http://127.0.0.1:8000/api/career/goals
+Invoke-RestMethod http://127.0.0.1:8000/api/career/notifications
+```
+
 ## Next Phase
 
-Phase 2 will add the career domain schema and first user-facing career data:
-
-- Resume profiles and resume versions.
-- Manual JD import.
-- Job postings and job subscriptions.
-- Applications.
-- Career goals and learning goals.
-- Notifications and proactive events.
-
-Document upload and parent/child chunking will be implemented around resume,
-JD, and project evidence rather than generic files.
+Phase 3 will add resume/JD/project document upload, parsing status, parent
+sections, child chunks, and Celery-backed parsing tasks.

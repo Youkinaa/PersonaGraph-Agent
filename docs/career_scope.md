@@ -45,3 +45,10 @@ Avoid:
 - Anti-bot bypass.
 - Automated messaging to recruiters.
 - Any workflow that depends on private user sessions from recruitment sites.
+
+## Phase 2 Boundary
+
+Phase 2 creates the career data model and lightweight UI/API surfaces. It does
+not call external job APIs yet. The intent is to make the core career entities
+explicit before adding retrieval, graph extraction, job discovery, and agentic
+planning.

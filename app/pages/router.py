@@ -30,7 +30,7 @@ async def index(request: Request, settings: Settings = Depends(get_settings)):
         context={
             "request": request,
             "settings": settings,
-            "phase": "Phase 1",
+            "phase": "Phase 2",
         },
     )
 

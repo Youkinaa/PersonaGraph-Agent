@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workspace-grid">
+  <article class="panel">
+    <h2>Manual JD</h2>
+    <form class="form-stack" method="post" action="/jobs/postings">
+      <label>Title <input name="title" required placeholder="AI Agent Intern" /></label>
+      <label>Company <input name="company" /></label>
+      <label>Location <input name="location" /></label>
+      <label>Remote Policy <input name="remote_policy" placeholder="onsite / hybrid / remote" /></label>
+      <label>Employment Type <input name="employment_type" placeholder="internship / full-time" /></label>
+      <label>Source URL <input name="source_url" /></label>
+      <label>Description <textarea name="description" rows="4"></textarea></label>
+      <label>Requirements <textarea name="requirements" rows="4"></textarea></label>
+      <button class="button" type="submit">Save JD</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Job Subscription</h2>
+    <form class="form-stack" method="post" action="/jobs/subscriptions">
+      <label>Name <input name="name" required placeholder="AI Agent Intern - Shanghai" /></label>
+      <label>Query <input name="query" required placeholder="AI Agent Intern RAG LangGraph" /></label>
+      <label>Locations <textarea name="locations" rows="3" placeholder="Shanghai&#10;Remote"></textarea></label>
+      <label>Remote Policy <input name="remote_policy" placeholder="hybrid" /></label>
+      <label>Frequency
+        <select name="frequency">
+          <option value="daily">daily</option>
+          <option value="weekly">weekly</option>
+        </select>
+      </label>
+      <button class="button" type="submit">Create Subscription</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Job Postings</h2>
+    <div class="item-list">
+      {% for job in job_postings %}
+      <article class="item-row">
+        <div>
+          <strong>{{ job.title }}</strong>
+          <span>{{ job.company or "Unknown company" }} · {{ job.location or "Unknown location" }}</span>
+        </div>
+        <small>{{ job.status }}</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No job postings yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel">
+    <h2>Subscriptions</h2>
+    <div class="item-list">
+      {% for subscription in job_subscriptions %}
+      <article class="item-row">
+        <div>
+          <strong>{{ subscription.name }}</strong>
+          <span>{{ subscription.query }}</span>
+        </div>
+        <small>{{ subscription.frequency }}</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No job subscriptions yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}
