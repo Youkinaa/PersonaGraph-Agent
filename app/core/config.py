@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    app_name: str = Field(default="PersonaGraph Agent", validation_alias="APP_NAME")
+    app_name: str = Field(default="PersonaGraph Career Agent", validation_alias="APP_NAME")
     app_env: str = Field(default="local", validation_alias="APP_ENV")
     app_version: str = Field(default="0.1.0", validation_alias="APP_VERSION")
     debug: bool = Field(default=True, validation_alias="APP_DEBUG")

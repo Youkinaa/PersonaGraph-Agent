@@ -1,15 +1,59 @@
-# PersonaGraph Agent
+# PersonaGraph Career Agent
 
-PersonaGraph Agent is a personal workflow agent platform built around long-term
-memory, dynamic skills, hybrid retrieval, graph retrieval, and workflow
-orchestration.
+PersonaGraph Career Agent is a career-focused AI agent platform for job search,
+resume/JD matching, job monitoring, interview preparation, and technical
+learning roadmaps.
 
-The project is implemented in small phases so every slice can be run, tested,
-and explained.
+The project keeps the original platform idea, but narrows the business scope to
+career workflows. The reusable capability pool is still the same: memory,
+document retrieval, graph retrieval, dynamic skills, background jobs, and
+workflow orchestration. GitHub analysis and travel planning are no longer
+standalone products; GitHub/project material becomes career evidence, and travel
+planning is removed.
+
+## Product Scope
+
+Core workflows:
+
+- Resume and project knowledge base.
+- JD analysis and resume-JD matching.
+- Job subscription, discovery, scoring, and notification.
+- Application tracking and weekly review.
+- Interview preparation from JD requirements and project evidence.
+- Career planning and technical learning roadmaps.
+
+Non-goals:
+
+- No generic chatbot as the main product.
+- No BOSS Zhipin login automation or anti-bot bypass.
+- No standalone GitHub repository analysis assistant.
+- No travel planning assistant.
+
+## Architecture
+
+```text
+FastAPI + Jinja2 + HTMX Workbench
+  -> API / partial routes
+  -> Intent Router / LangGraph workflows
+  -> Capability Pool
+      -> Career memory
+      -> Resume/JD document RAG
+      -> Job discovery adapters
+      -> Career graph retrieval
+      -> Dynamic SKILL.md runtime
+      -> Notification service
+      -> Task manager
+  -> Storage / Index Layer
+      -> PostgreSQL
+      -> Redis + Celery
+      -> Milvus
+      -> Elasticsearch
+      -> Neo4j
+```
 
 ## Phase 0
 
-Current implementation:
+Implemented:
 
 - FastAPI application shell.
 - Jinja2 + HTMX workspace page.
@@ -20,13 +64,13 @@ Current implementation:
 
 ## Phase 1
 
-Current implementation:
+Implemented:
 
 - PostgreSQL connection through SQLAlchemy.
 - Alembic migration for core platform tables.
 - Redis connectivity check.
 - Celery app and a minimal `tasks.ping` worker task.
-- `task_runs` status lifecycle: `queued -> running -> succeeded / failed`.
+- `task_runs` lifecycle: `queued -> running -> succeeded / failed`.
 - API endpoints for dependency health and task status.
 - HTMX controls for dependency checks and Celery ping tasks.
 
@@ -40,8 +84,19 @@ Core tables created in Phase 1:
 - `messages`
 - `task_runs`
 
+Why these still fit the career-focused project:
+
+- `documents`, `document_sections`, and `document_chunks` will store resumes,
+  JDs, project docs, company notes, and interview notes.
+- `workflow_runs` and `messages` will store LangGraph career workflow runs.
+- `task_runs` will track document parsing, indexing, job scans, notifications,
+  and memory consolidation.
+- `users` stays schema-only for now; authentication is deferred.
+
 Still not implemented yet:
 
+- Career-specific tables such as resumes, job postings, subscriptions,
+  applications, goals, notifications, and milestones.
 - Milvus / Elasticsearch / Neo4j indexing.
 - LangGraph workflows.
 - Memory lifecycle.
@@ -86,29 +141,26 @@ Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/tasks/ping
 
 ## Docker Infrastructure
 
-Phase 0 does not connect to PostgreSQL, Redis, Milvus, Elasticsearch, or Neo4j
-yet. The application only reads their connection settings from `.env`.
-
-Your current infrastructure compose file lives outside this repository:
+The existing infrastructure compose file lives outside this repository:
 
 ```text
 D:\docker-data\compose\docker-compose.yml
 ```
 
-Start the existing infrastructure stack:
+Start it with:
 
 ```powershell
 docker compose -f D:\docker-data\compose\docker-compose.yml up -d
 ```
 
-Expected containers for the confirmed architecture:
+Expected containers:
 
 - `postgres`: main business database.
 - `milvus-standalone`: vector search.
 - `milvus-etcd`: Milvus metadata dependency.
 - `milvus-minio`: Milvus object storage dependency.
 - `es`: Elasticsearch keyword/BM25 search.
-- `neo4j`: graph index.
+- `neo4j`: career graph index.
 - `milvus-attu`: optional Milvus UI.
 
 Redis is currently managed separately under:
@@ -124,34 +176,17 @@ cd D:\Redis
 .\redis-server.exe
 ```
 
-Check running containers:
-
-```powershell
-docker ps
-```
-
-Check Redis connectivity:
-
-```powershell
-Test-NetConnection 127.0.0.1 -Port 6379
-```
-
 ## Configuration
 
 Copy `.env.example` to `.env` when starting from a clean machine. Keep real API
 keys only in `.env`.
 
-Existing keys used in Phase 0:
+Required variables:
 
 - `LLM_API_KEY`
 - `LLM_MODEL_ID`
 - `LLM_BASE_URL`
 - `SERPAPI_API_KEY`
-
-Infrastructure settings are already modeled but not connected until Phase 1.
-
-Required infrastructure variables for later phases:
-
 - `DATABASE_URL`
 - `REDIS_URL`
 - `MILVUS_URI`
@@ -162,33 +197,29 @@ Required infrastructure variables for later phases:
 
 ## Verification
 
-Phase 1 verifies the application foundation, database state, Redis connectivity,
-and one Celery background task. It still does not verify the full RAG stack.
-
 Run tests:
 
 ```powershell
 python -m pytest -q
 ```
 
-Expected result:
+Expected:
 
 ```text
 2 passed
 ```
 
-Verify routes through the running FastAPI app:
+Check migration state:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8000/health
+python -m alembic current
 ```
 
-Expected fields:
+Expected:
 
-- `status`: `ok`
-- `phase`: `phase_1_task_state`
-- `app.has_llm_api_key`: whether `.env` contains an LLM key.
-- `app.has_serpapi_api_key`: whether `.env` contains a SerpAPI key.
+```text
+0001_phase_1 (head)
+```
 
 Verify dependencies:
 
@@ -201,15 +232,30 @@ Expected:
 - `checks.database.status`: `ok`
 - `checks.redis.status`: `ok`
 
-Manual browser checks:
+Verify Celery task flow:
 
-- `http://127.0.0.1:8000` renders the workspace page.
-- `http://127.0.0.1:8000/health` returns JSON.
-- The `Refresh` button on the workspace page updates the status panel through
-  HTMX.
-- The `Check` button validates PostgreSQL and Redis.
-- The `Enqueue Ping` button creates a task row and lets the Celery worker mark
-  it as succeeded.
+```powershell
+$task = Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/tasks/ping
+Start-Sleep -Seconds 2
+Invoke-RestMethod http://127.0.0.1:8000/api/tasks/$($task.id)
+```
 
-Phase 2 will add document upload, parsing status, parent sections, and child
-chunks.
+Expected:
+
+- `task_name`: `celery_ping`
+- `status`: `succeeded`
+- `result.message`: `pong`
+
+## Next Phase
+
+Phase 2 will add the career domain schema and first user-facing career data:
+
+- Resume profiles and resume versions.
+- Manual JD import.
+- Job postings and job subscriptions.
+- Applications.
+- Career goals and learning goals.
+- Notifications and proactive events.
+
+Document upload and parent/child chunking will be implemented around resume,
+JD, and project evidence rather than generic files.

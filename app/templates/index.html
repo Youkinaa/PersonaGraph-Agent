@@ -5,8 +5,8 @@
   <article class="panel panel-wide">
     <div class="panel-header">
       <div>
-        <h2>Platform Foundation</h2>
-        <p>FastAPI, Jinja2, HTMX, typed settings, request logging, and health checks.</p>
+        <h2>Career Agent Foundation</h2>
+        <p>FastAPI, Jinja2, HTMX, typed settings, request logging, and health checks for the job-search platform.</p>
       </div>
       <button
         class="button"
@@ -24,7 +24,7 @@
 
   <article class="panel">
     <h2>Task State</h2>
-    <p>PostgreSQL stores task records while Redis and Celery move background work.</p>
+    <p>PostgreSQL stores workflow state while Redis and Celery move background work such as job scans and document parsing.</p>
     <div class="actions">
       <button
         class="button"
@@ -48,7 +48,7 @@
 
   <article class="panel">
     <h2>Dependency Checks</h2>
-    <p>Phase 1 validates the app can reach PostgreSQL and Redis.</p>
+    <p>Phase 1 validates the career platform can reach PostgreSQL and Redis.</p>
     <div class="actions">
       <button
         class="button"
@@ -65,9 +65,9 @@
   <article class="panel panel-wide">
     <h2>Next Build Slice</h2>
     <dl class="compact-list">
-      <div><dt>Documents</dt><dd>Upload, parse status, parent sections, child chunks</dd></div>
-      <div><dt>Workers</dt><dd>Move document parsing and indexing into background jobs</dd></div>
-      <div><dt>Validation</dt><dd>Show document and task state in the workbench</dd></div>
+      <div><dt>Career Data</dt><dd>Resume versions, JD records, applications, goals, and job subscriptions</dd></div>
+      <div><dt>Documents</dt><dd>Resume and JD upload with parent sections and child chunks</dd></div>
+      <div><dt>Workers</dt><dd>Move parsing, indexing, and job discovery into background tasks</dd></div>
     </dl>
   </article>
 </section>
