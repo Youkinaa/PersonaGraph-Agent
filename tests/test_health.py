@@ -10,7 +10,7 @@ def test_health_endpoint() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
-    assert payload["phase"] == "phase_2_career_domain"
+    assert payload["phase"] == "phase_3_document_ingestion"
 
 
 def test_workspace_pages_render() -> None:

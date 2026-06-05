@@ -50,15 +50,19 @@ def create_resume_version(
     version_label: str,
     content: str | None = None,
     is_primary: bool = False,
+    document_id: str | None = None,
+    source_type: str = "manual",
 ) -> ResumeVersion:
     if is_primary:
         for version in db.scalars(select(ResumeVersion).where(ResumeVersion.profile_id == profile_id)):
             version.is_primary = False
     version = ResumeVersion(
         profile_id=profile_id,
+        document_id=document_id or None,
         version_label=version_label,
         content=content or None,
         is_primary=is_primary,
+        source_type=source_type,
         status="draft",
     )
     db.add(version)
@@ -145,6 +149,7 @@ def create_job_posting(
     source_url: str | None = None,
     remote_policy: str | None = None,
     employment_type: str | None = None,
+    document_id: str | None = None,
 ) -> JobPosting:
     posting = JobPosting(
         title=title,
@@ -153,6 +158,7 @@ def create_job_posting(
         description=description or None,
         requirements=requirements or None,
         source_url=source_url or None,
+        document_id=document_id or None,
         remote_policy=remote_policy or None,
         employment_type=employment_type or None,
         status="open",

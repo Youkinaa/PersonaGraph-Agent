@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workspace-grid">
+  <article class="panel">
+    <h2>Upload Document</h2>
+    <form class="form-stack" method="post" action="/documents/upload" enctype="multipart/form-data">
+      <label>File <input type="file" name="file" required /></label>
+      <label>Title <input name="title" placeholder="Optional display title" /></label>
+      <label>Type
+        <select name="doc_type">
+          <option value="resume">resume</option>
+          <option value="jd">jd</option>
+          <option value="project">project</option>
+          <option value="company_note">company_note</option>
+          <option value="interview_note">interview_note</option>
+          <option value="learning_resource">learning_resource</option>
+          <option value="generic">generic</option>
+        </select>
+      </label>
+      <label>Resume Profile
+        <select name="resume_profile_id">
+          <option value="">None</option>
+          {% for profile in profiles %}
+          <option value="{{ profile.id }}">{{ profile.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Resume Version Label <input name="resume_version_label" value="uploaded" /></label>
+      <label>Company <input name="company" /></label>
+      <label>Location <input name="location" /></label>
+      <label>Source URL <input name="source_url" /></label>
+      <button class="button" type="submit">Upload And Parse</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Paste Text</h2>
+    <form class="form-stack" method="post" action="/documents/text">
+      <label>Title <input name="title" required /></label>
+      <label>Type
+        <select name="doc_type">
+          <option value="jd">jd</option>
+          <option value="resume">resume</option>
+          <option value="project">project</option>
+          <option value="company_note">company_note</option>
+          <option value="interview_note">interview_note</option>
+          <option value="learning_resource">learning_resource</option>
+          <option value="generic">generic</option>
+        </select>
+      </label>
+      <label>Resume Profile
+        <select name="resume_profile_id">
+          <option value="">None</option>
+          {% for profile in profiles %}
+          <option value="{{ profile.id }}">{{ profile.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Resume Version Label <input name="resume_version_label" value="uploaded" /></label>
+      <label>Company <input name="company" /></label>
+      <label>Location <input name="location" /></label>
+      <label>Source URL <input name="source_url" /></label>
+      <label>Content <textarea name="content" rows="10" required></textarea></label>
+      <button class="button" type="submit">Save And Parse</button>
+    </form>
+  </article>
+
+  <article class="panel panel-wide">
+    <h2>Parsed Corpus</h2>
+    <div class="status-grid">
+      <div class="metric"><span>Documents</span><strong>{{ counts.documents }}</strong></div>
+      <div class="metric"><span>Sections</span><strong>{{ counts.sections }}</strong></div>
+      <div class="metric"><span>Chunks</span><strong>{{ counts.chunks }}</strong></div>
+      <div class="metric"><span>Index</span><strong>pending</strong></div>
+    </div>
+    <div class="item-list">
+      {% for document in documents %}
+      <article class="item-row">
+        <div>
+          <strong>{{ document.title }}</strong>
+          <span>{{ document.doc_type }} · parse={{ document.parse_status }} · index={{ document.index_status }}</span>
+          <span>{{ document.sections | length }} sections · {{ document.chunks | length }} chunks</span>
+        </div>
+        <small>{{ document.source_type }}</small>
+      </article>
+      {% else %}
+      <p class="empty-state">No documents yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

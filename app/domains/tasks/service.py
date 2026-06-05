@@ -69,3 +69,13 @@ def get_task_run(db: Session, task_run_id: str) -> TaskRun | None:
 def list_recent_task_runs(db: Session, limit: int = 8) -> list[TaskRun]:
     statement = select(TaskRun).order_by(desc(TaskRun.created_at)).limit(limit)
     return list(db.scalars(statement))
+
+
+def list_task_runs_by_payload(db: Session, payload_key: str, payload_value: str, limit: int = 20) -> list[TaskRun]:
+    statement = (
+        select(TaskRun)
+        .where(TaskRun.payload[payload_key].astext == payload_value)
+        .order_by(desc(TaskRun.created_at))
+        .limit(limit)
+    )
+    return list(db.scalars(statement))

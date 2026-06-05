@@ -24,6 +24,8 @@ class ResumeVersionCreate(BaseModel):
     version_label: str = "v1"
     content: str | None = None
     is_primary: bool = False
+    document_id: str | None = None
+    source_type: str = "manual"
 
 
 class JobPostingCreate(BaseModel):
@@ -35,6 +37,7 @@ class JobPostingCreate(BaseModel):
     source_url: str | None = None
     remote_policy: str | None = None
     employment_type: str | None = None
+    document_id: str | None = None
 
 
 class JobSubscriptionCreate(BaseModel):

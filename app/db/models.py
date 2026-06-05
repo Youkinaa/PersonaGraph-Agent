@@ -40,8 +40,8 @@ class Document(TimestampMixin, Base):
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
 
     user: Mapped[User | None] = relationship(back_populates="documents")
-    sections: Mapped[list["DocumentSection"]] = relationship(back_populates="document")
-    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document")
+    sections: Mapped[list["DocumentSection"]] = relationship(back_populates="document", cascade="all, delete-orphan")
+    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
 
 class DocumentSection(TimestampMixin, Base):
@@ -60,7 +60,7 @@ class DocumentSection(TimestampMixin, Base):
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     document: Mapped[Document] = relationship(back_populates="sections")
-    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="section")
+    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="section", cascade="all, delete-orphan")
 
 
 class DocumentChunk(TimestampMixin, Base):
@@ -149,7 +149,7 @@ class ResumeProfile(TimestampMixin, Base):
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
 
     user: Mapped[User | None] = relationship(back_populates="resume_profiles")
-    versions: Mapped[list["ResumeVersion"]] = relationship(back_populates="profile")
+    versions: Mapped[list["ResumeVersion"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
 
 
 class ResumeVersion(TimestampMixin, Base):
@@ -256,8 +256,8 @@ class JobPosting(TimestampMixin, Base):
     source: Mapped[JobSource | None] = relationship(back_populates="postings")
     subscription: Mapped[JobSubscription | None] = relationship(back_populates="postings")
     document: Mapped[Document | None] = relationship()
-    scores: Mapped[list["JobScore"]] = relationship(back_populates="job_posting")
-    applications: Mapped[list["Application"]] = relationship(back_populates="job_posting")
+    scores: Mapped[list["JobScore"]] = relationship(back_populates="job_posting", cascade="all, delete-orphan")
+    applications: Mapped[list["Application"]] = relationship(back_populates="job_posting", cascade="all, delete-orphan")
 
 
 class JobScore(TimestampMixin, Base):

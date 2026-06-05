@@ -79,7 +79,7 @@ Current placeholders:
 
 ## Phase 3: Resume / JD Document Ingestion
 
-Planned:
+Implemented:
 
 - Resume upload.
 - JD paste/import.
@@ -89,6 +89,13 @@ Planned:
 - Parent section splitting.
 - Child chunk splitting.
 - Celery-backed parsing task.
+
+Current placeholders:
+
+- No Milvus embeddings yet.
+- No Elasticsearch BM25 indexing yet.
+- No Neo4j entity extraction yet.
+- PDF parsing is text-only and not layout-aware.
 
 ## Phase 4: Hybrid RAG
 

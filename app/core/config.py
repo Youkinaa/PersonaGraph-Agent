@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     app_version: str = Field(default="0.1.0", validation_alias="APP_VERSION")
     debug: bool = Field(default=True, validation_alias="APP_DEBUG")
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
+    document_upload_dir: str = Field(default="uploads/documents", validation_alias="DOCUMENT_UPLOAD_DIR")
 
     llm_api_key: SecretStr | None = Field(default=None, validation_alias="LLM_API_KEY")
     llm_model_id: str | None = Field(default=None, validation_alias="LLM_MODEL_ID")
@@ -55,6 +56,13 @@ class Settings(BaseSettings):
     def static_dir(self) -> Path:
         return BASE_DIR / "app" / "static"
 
+    @property
+    def upload_dir(self) -> Path:
+        upload_path = Path(self.document_upload_dir)
+        if upload_path.is_absolute():
+            return upload_path
+        return BASE_DIR / upload_path
+
     def public_summary(self) -> dict[str, Any]:
         """Return non-secret settings suitable for status pages and health checks."""
 
@@ -63,6 +71,7 @@ class Settings(BaseSettings):
             "app_env": self.app_env,
             "app_version": self.app_version,
             "debug": self.debug,
+            "document_upload_dir": str(self.upload_dir),
             "llm_model_id": self.llm_model_id,
             "has_llm_api_key": self.llm_api_key is not None,
             "has_serpapi_api_key": self.serpapi_api_key is not None,

@@ -52,3 +52,10 @@ Phase 2 creates the career data model and lightweight UI/API surfaces. It does
 not call external job APIs yet. The intent is to make the core career entities
 explicit before adding retrieval, graph extraction, job discovery, and agentic
 planning.
+
+## Phase 3 Boundary
+
+Phase 3 turns uploaded or pasted resume/JD/project material into PostgreSQL
+parent sections and child chunks. It deliberately stops before vector, keyword,
+or graph indexing so the source-of-truth document lifecycle can be validated
+first.

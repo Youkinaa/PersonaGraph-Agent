@@ -126,6 +126,29 @@ Current simplifications:
 - Notifications can be created manually; proactive generation starts later.
 - Career goals and learning goals are stored but not planned by LangGraph yet.
 
+## Phase 3
+
+Implemented:
+
+- Document upload and text paste ingestion.
+- Local file persistence under `DOCUMENT_UPLOAD_DIR`.
+- Celery-backed document parsing task `documents.parse`.
+- Parent section splitting.
+- Child chunk splitting.
+- `documents`, `document_sections`, and `document_chunks` persistence.
+- Resume document linking to `resume_versions`.
+- JD document linking to `job_postings`.
+- `/documents` workbench page.
+- `/api/documents` JSON API.
+
+Current simplifications:
+
+- Supported file types: `.txt`, `.md`, `.markdown`, `.text`, and `.pdf`.
+- PDF parsing uses text extraction only; no layout-aware parsing yet.
+- Chunking uses simple character windows with overlap; tokenizer-aware splitting
+  comes later.
+- Milvus, Elasticsearch, and Neo4j indexing are still pending.
+
 ## Local Run
 
 Create a virtual environment, install dependencies, then start the app:
@@ -274,6 +297,7 @@ Verify career pages:
 
 ```text
 http://127.0.0.1:8000/resumes
+http://127.0.0.1:8000/documents
 http://127.0.0.1:8000/jobs
 http://127.0.0.1:8000/applications
 http://127.0.0.1:8000/goals
@@ -290,7 +314,33 @@ Invoke-RestMethod http://127.0.0.1:8000/api/career/goals
 Invoke-RestMethod http://127.0.0.1:8000/api/career/notifications
 ```
 
+Verify document ingestion:
+
+```powershell
+$payload = @{
+  title = "Sample JD"
+  doc_type = "jd"
+  content = "AI Agent Intern`nRequirements`nPython, FastAPI, RAG, LangGraph"
+} | ConvertTo-Json
+
+$result = Invoke-RestMethod `
+  -Method Post `
+  -Uri http://127.0.0.1:8000/api/documents/text `
+  -Body $payload `
+  -ContentType "application/json"
+
+Start-Sleep -Seconds 2
+Invoke-RestMethod http://127.0.0.1:8000/api/documents/$($result.document.id)
+```
+
+Expected:
+
+- `parse_status`: `parsed`
+- `index_status`: `ready_for_indexing`
+- `section_count` greater than `0`
+- `chunk_count` greater than `0`
+
 ## Next Phase
 
-Phase 3 will add resume/JD/project document upload, parsing status, parent
-sections, child chunks, and Celery-backed parsing tasks.
+Phase 4 will add Hybrid RAG: embeddings, Milvus indexing, Elasticsearch BM25,
+RRF fusion, parent fetch, and evidence packs.
