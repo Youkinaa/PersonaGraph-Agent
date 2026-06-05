@@ -180,13 +180,44 @@ def mark_document_failed(db: Session, document_id: str, message: str) -> None:
     db.commit()
 
 
-def list_documents(db: Session, limit: int = 30) -> list[Document]:
-    statement = (
-        select(Document)
-        .options(selectinload(Document.sections), selectinload(Document.chunks))
-        .order_by(desc(Document.created_at))
-        .limit(limit)
-    )
+def delete_document(db: Session, document_id: str) -> dict | None:
+    document = db.get(Document, document_id)
+    if document is None:
+        return None
+
+    file_deleted = delete_stored_file(document.file_path)
+    db.delete(document)
+    db.commit()
+    return {
+        "document_id": document_id,
+        "file_deleted": file_deleted,
+    }
+
+
+def delete_stored_file(file_path: str | None) -> bool:
+    if not file_path:
+        return False
+
+    path = Path(file_path)
+    upload_dir = get_settings().upload_dir.resolve()
+    resolved_path = path.resolve()
+    try:
+        resolved_path.relative_to(upload_dir)
+    except ValueError:
+        return False
+
+    if not resolved_path.is_file():
+        return False
+
+    resolved_path.unlink()
+    return True
+
+
+def list_documents(db: Session, limit: int = 30, doc_type: str | None = None) -> list[Document]:
+    statement = select(Document).options(selectinload(Document.sections), selectinload(Document.chunks))
+    if doc_type:
+        statement = statement.where(Document.doc_type == doc_type)
+    statement = statement.order_by(desc(Document.created_at)).limit(limit)
     return list(db.scalars(statement))
 
 

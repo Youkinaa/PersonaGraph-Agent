@@ -5,9 +5,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.domains.career.service import create_job_posting, create_resume_version
-from app.domains.documents.jobs import enqueue_parse_document
+from app.domains.documents.career_links import link_document_to_career
 from app.domains.documents import service as document_service
+from app.domains.documents.jobs import enqueue_parse_document
 
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -18,6 +18,8 @@ class TextDocumentCreate(BaseModel):
     doc_type: str = "generic"
     content: str
     resume_profile_id: str | None = None
+    resume_profile_title: str | None = None
+    resume_target_role: str | None = None
     resume_version_label: str = "uploaded"
     company: str | None = None
     location: str | None = None
@@ -50,12 +52,22 @@ def read_document(document_id: str, db: Session = Depends(get_db)) -> dict:
     return serialize_document(document)
 
 
+@router.delete("/{document_id}")
+def delete_document(document_id: str, db: Session = Depends(get_db)) -> dict:
+    result = document_service.delete_document(db, document_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
+    return {"deleted": True, **result}
+
+
 @router.post("/upload", status_code=status.HTTP_202_ACCEPTED)
 def upload_document(
     file: UploadFile = File(...),
     doc_type: str = Form("generic"),
     title: str | None = Form(None),
     resume_profile_id: str | None = Form(None),
+    resume_profile_title: str | None = Form(None),
+    resume_target_role: str | None = Form(None),
     resume_version_label: str = Form("uploaded"),
     company: str | None = Form(None),
     location: str | None = Form(None),
@@ -70,6 +82,8 @@ def upload_document(
             doc_type=doc_type,
             title=document.title,
             resume_profile_id=resume_profile_id,
+            resume_profile_title=resume_profile_title,
+            resume_target_role=resume_target_role,
             resume_version_label=resume_version_label,
             company=company,
             location=location,
@@ -90,6 +104,8 @@ def create_text_document(payload: TextDocumentCreate, db: Session = Depends(get_
         doc_type=payload.doc_type,
         title=document.title,
         resume_profile_id=payload.resume_profile_id,
+        resume_profile_title=payload.resume_profile_title,
+        resume_target_role=payload.resume_target_role,
         resume_version_label=payload.resume_version_label,
         company=payload.company,
         location=payload.location,
@@ -97,34 +113,3 @@ def create_text_document(payload: TextDocumentCreate, db: Session = Depends(get_
     )
     task_run = enqueue_parse_document(db, document.id)
     return {"document": serialize_document(document), "task_run_id": task_run.id, "celery_task_id": task_run.celery_task_id}
-
-
-def link_document_to_career(
-    db: Session,
-    document_id: str,
-    doc_type: str,
-    title: str,
-    resume_profile_id: str | None = None,
-    resume_version_label: str = "uploaded",
-    company: str | None = None,
-    location: str | None = None,
-    source_url: str | None = None,
-) -> None:
-    if doc_type == "resume" and resume_profile_id:
-        create_resume_version(
-            db,
-            profile_id=resume_profile_id,
-            version_label=resume_version_label,
-            document_id=document_id,
-            source_type="document",
-            is_primary=False,
-        )
-    if doc_type == "jd":
-        create_job_posting(
-            db,
-            title=title,
-            company=company,
-            location=location,
-            source_url=source_url,
-            document_id=document_id,
-        )

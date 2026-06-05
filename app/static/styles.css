@@ -150,6 +150,18 @@ p {
   color: var(--accent-dark);
 }
 
+.button-danger {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+}
+
+.button-small {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
 .button:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
@@ -356,6 +368,35 @@ p {
   color: var(--muted);
 }
 
+.item-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.inline-form {
+  margin: 0;
+}
+
+.sub-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+
 @media (max-width: 760px) {
   .topbar {
     align-items: flex-start;
@@ -386,6 +427,16 @@ p {
   }
 
   .item-row {
+    flex-direction: column;
+  }
+
+  .item-actions {
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .sub-row {
+    align-items: stretch;
     flex-direction: column;
   }
 }

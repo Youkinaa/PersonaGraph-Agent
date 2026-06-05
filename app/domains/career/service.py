@@ -53,6 +53,10 @@ def create_resume_version(
     document_id: str | None = None,
     source_type: str = "manual",
 ) -> ResumeVersion:
+    normalized_source_type = source_type or "manual"
+    if document_id and normalized_source_type == "manual":
+        normalized_source_type = "document"
+
     if is_primary:
         for version in db.scalars(select(ResumeVersion).where(ResumeVersion.profile_id == profile_id)):
             version.is_primary = False
@@ -62,7 +66,7 @@ def create_resume_version(
         version_label=version_label,
         content=content or None,
         is_primary=is_primary,
-        source_type=source_type,
+        source_type=normalized_source_type,
         status="draft",
     )
     db.add(version)
@@ -71,10 +75,28 @@ def create_resume_version(
     return version
 
 
+def delete_resume_profile(db: Session, profile_id: str) -> bool:
+    profile = db.get(ResumeProfile, profile_id)
+    if profile is None:
+        return False
+    db.delete(profile)
+    db.commit()
+    return True
+
+
+def delete_resume_version(db: Session, version_id: str) -> bool:
+    version = db.get(ResumeVersion, version_id)
+    if version is None:
+        return False
+    db.delete(version)
+    db.commit()
+    return True
+
+
 def list_resume_profiles(db: Session, limit: int = 20) -> list[ResumeProfile]:
     statement = (
         select(ResumeProfile)
-        .options(selectinload(ResumeProfile.versions))
+        .options(selectinload(ResumeProfile.versions).selectinload(ResumeVersion.document))
         .order_by(desc(ResumeProfile.created_at))
         .limit(limit)
     )

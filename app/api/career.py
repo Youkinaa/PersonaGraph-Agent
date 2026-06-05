@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -104,6 +104,8 @@ def list_resumes(db: Session = Depends(get_db)) -> dict:
                         "version_label": version.version_label,
                         "status": version.status,
                         "is_primary": version.is_primary,
+                        "document_id": version.document_id,
+                        "source_type": version.source_type,
                     }
                     for version in profile.versions
                 ],
@@ -119,6 +121,14 @@ def create_resume_profile(payload: ResumeProfileCreate, db: Session = Depends(ge
     return row_summary(profile) | {"title": profile.title, "target_role": profile.target_role}
 
 
+@router.delete("/resume-profiles/{profile_id}")
+def delete_resume_profile(profile_id: str, db: Session = Depends(get_db)) -> dict:
+    deleted = service.delete_resume_profile(db, profile_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume profile not found.")
+    return {"deleted": True, "profile_id": profile_id}
+
+
 @router.post("/resume-versions", status_code=status.HTTP_201_CREATED)
 def create_resume_version(payload: ResumeVersionCreate, db: Session = Depends(get_db)) -> dict:
     version = service.create_resume_version(
@@ -127,8 +137,23 @@ def create_resume_version(payload: ResumeVersionCreate, db: Session = Depends(ge
         payload.version_label,
         payload.content,
         payload.is_primary,
+        document_id=payload.document_id,
+        source_type=payload.source_type,
     )
-    return row_summary(version) | {"version_label": version.version_label, "profile_id": version.profile_id}
+    return row_summary(version) | {
+        "version_label": version.version_label,
+        "profile_id": version.profile_id,
+        "document_id": version.document_id,
+        "source_type": version.source_type,
+    }
+
+
+@router.delete("/resume-versions/{version_id}")
+def delete_resume_version(version_id: str, db: Session = Depends(get_db)) -> dict:
+    deleted = service.delete_resume_version(db, version_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume version not found.")
+    return {"deleted": True, "version_id": version_id}
 
 
 @router.get("/jobs")

@@ -23,6 +23,14 @@
         </select>
       </label>
       <label>Version <input name="version_label" value="v1" /></label>
+      <label>Source Document
+        <select name="document_id">
+          <option value="">Manual content</option>
+          {% for document in resume_documents %}
+          <option value="{{ document.id }}">{{ document.title }} / {{ document.parse_status }}</option>
+          {% endfor %}
+        </select>
+      </label>
       <label>Content <textarea name="content" rows="6"></textarea></label>
       <label class="check-row"><input type="checkbox" name="is_primary" value="true" /> Primary version</label>
       <button class="button" type="submit" {% if not profiles %}disabled{% endif %}>Add Version</button>
@@ -37,8 +45,40 @@
         <div>
           <strong>{{ profile.title }}</strong>
           <span>{{ profile.target_role or "No target role" }}</span>
+          <div class="sub-list">
+            {% for version in profile.versions %}
+            <div class="sub-row">
+              <span>
+                {{ version.version_label }} / {{ version.source_type }} / {{ version.status }}
+                {% if version.document %}
+                / {{ version.document.title }}
+                {% endif %}
+              </span>
+              <form
+                class="inline-form"
+                method="post"
+                action="/resumes/versions/{{ version.id }}/delete"
+                onsubmit="return confirm('Delete this resume version?')"
+              >
+                <button class="button button-small button-danger" type="submit">Delete Version</button>
+              </form>
+            </div>
+            {% else %}
+            <span>No versions yet.</span>
+            {% endfor %}
+          </div>
         </div>
-        <small>{{ profile.versions | length }} versions</small>
+        <div class="item-actions">
+          <small>{{ profile.versions | length }} versions</small>
+          <form
+            class="inline-form"
+            method="post"
+            action="/resumes/profiles/{{ profile.id }}/delete"
+            onsubmit="return confirm('Delete this resume profile and all of its versions? Uploaded documents are kept.')"
+          >
+            <button class="button button-danger" type="submit">Delete Profile</button>
+          </form>
+        </div>
       </article>
       {% else %}
       <p class="empty-state">No resume profiles yet.</p>

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.domains.career import service as career_service
+from app.domains.documents.career_links import link_document_to_career
 from app.domains.documents import service as document_service
 from app.domains.documents.jobs import enqueue_parse_document
 
@@ -42,6 +43,8 @@ def upload_document_page(
     doc_type: str = Form("generic"),
     title: str | None = Form(None),
     resume_profile_id: str | None = Form(None),
+    resume_profile_title: str | None = Form(None),
+    resume_target_role: str | None = Form(None),
     resume_version_label: str = Form("uploaded"),
     company: str | None = Form(None),
     location: str | None = Form(None),
@@ -55,6 +58,8 @@ def upload_document_page(
         doc_type,
         document.title,
         resume_profile_id=resume_profile_id,
+        resume_profile_title=resume_profile_title,
+        resume_target_role=resume_target_role,
         resume_version_label=resume_version_label,
         company=company,
         location=location,
@@ -70,6 +75,8 @@ def create_text_document_page(
     doc_type: str = Form("generic"),
     content: str = Form(...),
     resume_profile_id: str | None = Form(None),
+    resume_profile_title: str | None = Form(None),
+    resume_target_role: str | None = Form(None),
     resume_version_label: str = Form("uploaded"),
     company: str | None = Form(None),
     location: str | None = Form(None),
@@ -83,6 +90,8 @@ def create_text_document_page(
         doc_type,
         document.title,
         resume_profile_id=resume_profile_id,
+        resume_profile_title=resume_profile_title,
+        resume_target_role=resume_target_role,
         resume_version_label=resume_version_label,
         company=company,
         location=location,
@@ -92,31 +101,7 @@ def create_text_document_page(
     return redirect_to("/documents")
 
 
-def link_document_to_career(
-    db: Session,
-    document_id: str,
-    doc_type: str,
-    title: str,
-    resume_profile_id: str | None = None,
-    resume_version_label: str = "uploaded",
-    company: str | None = None,
-    location: str | None = None,
-    source_url: str | None = None,
-) -> None:
-    if doc_type == "resume" and resume_profile_id:
-        career_service.create_resume_version(
-            db,
-            profile_id=resume_profile_id,
-            version_label=resume_version_label,
-            document_id=document_id,
-            source_type="document",
-        )
-    if doc_type == "jd":
-        career_service.create_job_posting(
-            db,
-            title=title,
-            company=company,
-            location=location,
-            source_url=source_url,
-            document_id=document_id,
-        )
+@router.post("/documents/{document_id}/delete")
+def delete_document_page(document_id: str, db: Session = Depends(get_db)):
+    document_service.delete_document(db, document_id)
+    return redirect_to("/documents")

@@ -26,6 +26,8 @@
           {% endfor %}
         </select>
       </label>
+      <label>New Resume Profile <input name="resume_profile_title" placeholder="Auto-use title if empty" /></label>
+      <label>Target Role <input name="resume_target_role" placeholder="AI Agent Intern" /></label>
       <label>Resume Version Label <input name="resume_version_label" value="uploaded" /></label>
       <label>Company <input name="company" /></label>
       <label>Location <input name="location" /></label>
@@ -57,6 +59,8 @@
           {% endfor %}
         </select>
       </label>
+      <label>New Resume Profile <input name="resume_profile_title" placeholder="Auto-use title if empty" /></label>
+      <label>Target Role <input name="resume_target_role" placeholder="AI Agent Intern" /></label>
       <label>Resume Version Label <input name="resume_version_label" value="uploaded" /></label>
       <label>Company <input name="company" /></label>
       <label>Location <input name="location" /></label>
@@ -79,10 +83,20 @@
       <article class="item-row">
         <div>
           <strong>{{ document.title }}</strong>
-          <span>{{ document.doc_type }} · parse={{ document.parse_status }} · index={{ document.index_status }}</span>
-          <span>{{ document.sections | length }} sections · {{ document.chunks | length }} chunks</span>
+          <span>{{ document.doc_type }} / parse={{ document.parse_status }} / index={{ document.index_status }}</span>
+          <span>{{ document.sections | length }} sections / {{ document.chunks | length }} chunks</span>
+          <span>{{ document.source_type }}</span>
         </div>
-        <small>{{ document.source_type }}</small>
+        <div class="item-actions">
+          <form
+            class="inline-form"
+            method="post"
+            action="/documents/{{ document.id }}/delete"
+            onsubmit="return confirm('Delete this document, parsed chunks, and stored upload file?')"
+          >
+            <button class="button button-danger" type="submit">Delete</button>
+          </form>
+        </div>
       </article>
       {% else %}
       <p class="empty-state">No documents yet.</p>

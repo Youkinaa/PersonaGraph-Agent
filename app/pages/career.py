@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.domains.career import service
+from app.domains.documents import service as document_service
 
 
 templates = Jinja2Templates(directory=str(get_settings().templates_dir))
@@ -28,6 +29,7 @@ def resumes_page(request: Request, db: Session = Depends(get_db)):
             "settings": get_settings(),
             "phase": "Phase 2",
             "profiles": service.list_resume_profiles(db),
+            "resume_documents": document_service.list_documents(db, limit=100, doc_type="resume"),
         },
     )
 
@@ -47,11 +49,34 @@ def create_resume_profile(
 def create_resume_version(
     profile_id: str = Form(...),
     version_label: str = Form("v1"),
+    document_id: str | None = Form(None),
     content: str | None = Form(None),
     is_primary: bool = Form(False),
     db: Session = Depends(get_db),
 ):
-    service.create_resume_version(db, profile_id, version_label, content, is_primary)
+    normalized_document_id = document_id or None
+    source_type = "document" if normalized_document_id else "manual"
+    service.create_resume_version(
+        db,
+        profile_id,
+        version_label,
+        content,
+        is_primary,
+        document_id=normalized_document_id,
+        source_type=source_type,
+    )
+    return redirect_to("/resumes")
+
+
+@router.post("/resumes/profiles/{profile_id}/delete")
+def delete_resume_profile(profile_id: str, db: Session = Depends(get_db)):
+    service.delete_resume_profile(db, profile_id)
+    return redirect_to("/resumes")
+
+
+@router.post("/resumes/versions/{version_id}/delete")
+def delete_resume_version(version_id: str, db: Session = Depends(get_db)):
+    service.delete_resume_version(db, version_id)
     return redirect_to("/resumes")
 
 

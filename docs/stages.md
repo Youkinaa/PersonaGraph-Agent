@@ -89,6 +89,11 @@ Implemented:
 - Parent section splitting.
 - Child chunk splitting.
 - Celery-backed parsing task.
+- Automatic resume profile and version creation for resume documents.
+- Existing resume document attachment to resume versions.
+- Document deletion with local file, section, and chunk cleanup.
+- Resume profile and version deletion without deleting raw documents.
+- Phase design issue tracking in `docs/phase_review_log.md`.
 
 Current placeholders:
 
@@ -96,6 +101,8 @@ Current placeholders:
 - No Elasticsearch BM25 indexing yet.
 - No Neo4j entity extraction yet.
 - PDF parsing is text-only and not layout-aware.
+- No external index cleanup yet because Milvus, Elasticsearch, and Neo4j
+  indexing are intentionally deferred.
 
 ## Phase 4: Hybrid RAG
 
