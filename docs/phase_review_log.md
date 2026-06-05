@@ -1,72 +1,61 @@
-# Phase Review Log
+# 阶段复盘记录
 
-This document records design issues, implementation decisions, fixes, and
-deferred work discovered during each phase. Keep it updated after every phase
-or meaningful phase refinement.
+这个文档用于记录每个阶段中暴露出来的设计问题、实现决策、修复内容、验证方式和后续延迟项。之后每完成一个阶段，或者对某个阶段做了比较重要的优化，都要继续更新这里。
 
-## How To Use This Log
+## 如何维护这个文档
 
-For each phase update, record:
+每次阶段复盘建议记录以下内容：
 
-- Context: what was being built or tested.
-- Issue: what was confusing, missing, risky, or incorrectly modeled.
-- Decision: the design choice we made.
-- Implementation: what changed in code or schema.
-- Verification: how it was tested.
-- Deferred work: what is intentionally left for a later phase.
+- 背景：当时在实现或测试什么。
+- 问题：哪里让人困惑、缺失、有风险，或者数据模型不够准确。
+- 决策：最后采用了什么设计取舍。
+- 实现：具体改了哪些代码、表结构或页面交互。
+- 验证：如何确认这个改动是可用的。
+- 延迟项：哪些事情是有意留到后续阶段做的。
 
-## 2026-06-05: Phase 3 Document Ingestion Refinement
+## 2026-06-05：Phase 3 文档摄取与简历生命周期优化
 
-### Context
+### 背景
 
-Phase 3 introduced document ingestion for resumes, JDs, and supporting career
-materials. The first implementation supported upload, file persistence,
-text-only parsing, parent sections, child chunks, Celery parsing tasks, and a
-basic documents page.
+Phase 3 引入了面向简历、JD 和求职材料的 Document Ingestion 能力。最初版本已经支持文件上传、文件落盘、文本解析、Parent Section 切分、Child Chunk 切分、Celery 解析任务，以及一个基础的 `/documents` 页面。
 
-During manual testing with a real resume PDF, several product and data-model
-gaps appeared around how uploaded documents connect to the career domain.
+在用真实简历 PDF 手动测试时，发现上传文档和求职业务对象之间的关系还不够完整，尤其是 `Document`、`ResumeProfile`、`ResumeVersion` 的边界和删除语义不够清楚。
 
-### Issue 1: Resume Upload Did Not Create A Resume Profile
+### 问题 1：上传简历后没有自动生成 Resume Profile
 
-Problem:
+问题：
 
-- Uploading a document with `doc_type=resume` created a `Document`.
-- The `/resumes` page stayed empty because no `ResumeProfile` or
-  `ResumeVersion` was created.
-- The documents page only allowed selecting an existing resume profile, so the
-  first resume upload only showed `None`.
+- 上传 `doc_type=resume` 的文档时，只创建了 `Document`。
+- `/resumes` 页面仍然为空，因为没有创建 `ResumeProfile` 和 `ResumeVersion`。
+- `/documents` 页面只能选择已有 Resume Profile。第一次上传简历时，下拉框只有 `None`。
 
-Decision:
+决策：
 
-- A resume upload should be a complete career-domain action.
-- If the user uploads a resume and does not choose an existing profile, the
-  system creates a new `ResumeProfile` from the supplied profile title or the
-  document title.
-- The system then creates a `ResumeVersion` linked to the uploaded `Document`.
+- 上传简历不应该只是创建一个原始文档，还应该完成求职业务侧的关联。
+- 如果用户上传简历时没有选择已有 Profile，系统应该根据用户填写的 Profile 标题，或者根据文档标题，自动创建一个新的 `ResumeProfile`。
+- 随后系统创建一个 `ResumeVersion`，并通过 `document_id` 关联到刚上传的 `Document`。
 
-Implementation:
+实现：
 
-- Added `app/domains/documents/career_links.py`.
-- Shared the document-to-career linking logic between page routes and API
-  routes.
-- Added optional `resume_profile_title` and `resume_target_role` fields to
-  document upload and text ingestion.
-- Backfilled the already uploaded resume document in the local database by
-  creating a matching profile and version.
+- 新增 `app/domains/documents/career_links.py`。
+- 将 document-to-career 关联逻辑从页面层和 API 层抽到共享 helper 中。
+- 文档上传和文本录入新增可选字段：
+  - `resume_profile_title`
+  - `resume_target_role`
+- 对本地已经上传过的一份简历文档做了补关联，创建了对应的 Profile 和 Version。
 
-Verification:
+验证：
 
-- `/documents` renders the new profile fields.
-- `/resumes` shows the uploaded resume as a profile with one version.
-- `python -m pytest -q` passed.
+- `/documents` 页面可以看到新建 Profile 相关字段。
+- `/resumes` 页面可以看到上传的简历 Profile，并且下面有一个版本。
+- `python -m pytest -q` 通过。
 
-### Issue 2: Resume Profile, Resume Version, And Document Boundaries Were Unclear
+### 问题 2：Resume Profile、Resume Version 和 Document 的边界不清楚
 
-Problem:
+问题：
 
-- It was easy to assume an uploaded PDF "lives inside" a resume profile.
-- In the data model, the relationship is indirect:
+- 很容易误以为上传的 PDF 是“放在 Resume Profile 里面”的。
+- 实际数据模型不是这样。正确关系是：
 
 ```text
 ResumeProfile
@@ -75,158 +64,148 @@ ResumeProfile
         `-- Document
 ```
 
-Decision:
+决策：
 
-- Keep raw materials and career organization separate.
-- `Document` is the source material and parsed corpus.
-- `ResumeProfile` is a career-facing container, such as "AI Agent Intern
-  Resume".
-- `ResumeVersion` is a specific version under that profile. It may reference a
-  document or contain manually entered text.
+- 原始材料和求职业务组织方式要分开。
+- `Document` 表示原始材料和解析后的语料，比如 PDF、txt、JD、项目材料。
+- `ResumeProfile` 表示求职侧的简历档案，比如“AI Agent 实习简历”。
+- `ResumeVersion` 表示某个 Profile 下的一版具体简历。它可以关联一个 Document，也可以直接存手写内容。
 
-Implementation:
+实现：
 
-- The `/resumes` page now shows versions under each profile.
-- Version rows show source type and linked document title when available.
+- `/resumes` 页面现在会在 Profile 下展示 Version 列表。
+- Version 行展示 `source_type`，如果有关联文档，也会展示文档标题。
 
-Verification:
+验证：
 
-- Manual page check confirmed profile/version/document data appears as
-  separate but connected concepts.
+- 手动打开 `/resumes` 页面，确认 Profile、Version、Document 的展示关系清楚。
 
-### Issue 3: Delete Semantics Needed To Be Explicit
+### 问题 3：删除语义需要明确区分
 
-Problem:
+问题：
 
-- A document delete and a resume version delete can look similar in the UI, but
-  they should not mean the same thing.
-- Deleting a resume profile or version should not accidentally delete the raw
-  uploaded PDF.
+- `/documents` 页面里的 Delete 和 `/resumes` 页面里的 Delete Version 看起来都像“删除”，但实际含义不同。
+- 删除 Resume Profile 或 Resume Version 不应该误删原始上传的 PDF。
 
-Decision:
+决策：
 
-- Deleting a `Document` is destructive for the raw corpus:
+- 删除 `Document` 是对原始语料的破坏性删除：
 
 ```text
 Delete Document
--> delete documents row
--> delete document_sections
--> delete document_chunks
--> delete stored upload file under uploads/documents
+-> 删除 documents 表记录
+-> 删除 document_sections
+-> 删除 document_chunks
+-> 删除 uploads/documents 下的本地上传文件
 ```
 
-- Deleting a `ResumeVersion` only removes the career-domain version record.
-- Deleting a `ResumeProfile` removes the profile and its versions, but keeps
-  raw documents.
+- 删除 `ResumeVersion` 只删除求职业务侧的一条版本记录。
+- 删除 `ResumeProfile` 会删除该 Profile 和它下面的所有 Version，但保留原始 `Document`。
 
-Implementation:
+实现：
 
-- Added `delete_document` and `delete_stored_file` in document service.
-- Added page and API delete routes for documents.
-- Added delete routes for resume profiles and resume versions.
-- Added delete buttons with browser confirmation prompts.
-- `delete_stored_file` only deletes files under the configured upload
-  directory.
+- 在 document service 中新增：
+  - `delete_document`
+  - `delete_stored_file`
+- 新增 Document 的页面删除路由和 API 删除路由。
+- 新增 Resume Profile 和 Resume Version 的删除路由。
+- 页面上增加 Delete 按钮和浏览器确认弹窗。
+- `delete_stored_file` 只允许删除配置的上传目录下的文件，避免误删项目外部路径。
 
-Verification:
+验证：
 
-- Created a temporary document, parsed it, deleted it, and confirmed:
-  - document row removed
-  - sections removed
-  - chunks removed
-  - stored file removed
-- `python -m pytest -q` passed.
+- 创建临时文档，解析后删除，确认：
+  - document row 被删除
+  - sections 被删除
+  - chunks 被删除
+  - 本地文件被删除
+- `python -m pytest -q` 通过。
 
-### Issue 4: Existing Documents Could Not Be Reattached After Deleting A Version
+### 问题 4：删除 Version 后，已有 Document 无法重新关联
 
-Problem:
+问题：
 
-- If a user deleted a `ResumeVersion`, the `Document` stayed in `/documents`,
-  but there was no UI path to attach that existing document to a profile again.
+- 如果用户删除了 `ResumeVersion`，原始 `Document` 仍然会保留在 `/documents`。
+- 但最初页面没有提供“把已有 Document 重新挂到某个 Resume Profile 下”的入口。
 
-Decision:
+决策：
 
-- Resume version creation should support selecting an existing resume document.
-- This keeps raw documents reusable and makes delete/recovery behavior
-  understandable.
+- 创建 Resume Version 时应该支持选择已有的 resume Document。
+- 这样即使用户删掉了 Version，只要原始 Document 还在，就可以重新关联。
 
-Implementation:
+实现：
 
-- Added a `Source Document` select field to the `/resumes` version form.
-- Added `doc_type` filtering to `list_documents`.
-- The `/resumes` page now passes existing resume documents into the template.
-- Fixed API resume-version creation so `document_id` and `source_type` are
-  actually persisted.
-- Added a service guard: if `document_id` is present and `source_type` is still
-  `manual`, store it as `document`.
+- `/resumes` 的 Version 表单新增 `Source Document` 下拉框。
+- `list_documents` 支持按 `doc_type` 过滤。
+- `/resumes` 页面向模板传入已有的 resume documents。
+- 修复 API 中 `resume-versions` 创建逻辑，让 `document_id` 和 `source_type` 真正写入数据库。
+- 在 service 层增加防呆逻辑：如果传了 `document_id`，但 `source_type` 还是 `manual`，则自动保存为 `document`。
 
-Verification:
+验证：
 
-- Smoke tested creating a temporary profile and attaching the existing resume
-  document as a version.
-- Confirmed the new version stored the expected `document_id` and
-  `source_type=document`.
-- Cleaned up the temporary profile.
-- `python -m pytest -q` passed.
+- 创建临时 Profile。
+- 将已有 resume Document 绑定为一个临时 Version。
+- 确认新 Version 中的 `document_id` 正确，`source_type=document`。
+- 删除临时 Profile 做清理。
+- `python -m pytest -q` 通过。
 
-### Issue 5: Should Deletes Use Hash Or Document ID?
+### 问题 5：删除时应该用 hash 还是 document_id
 
-Problem:
+问题：
 
-- It was unclear whether deleting chunks/files should be driven by content hash
-  or by document id.
+- 一开始不确定删除 chunks、文件或后续索引时，应该靠 content hash 还是靠 document id。
 
-Decision:
+决策：
 
-- Deletion should be driven by `document_id`, not content hash.
-- A hash is not a business identity. The same content can be uploaded more than
-  once for different purposes.
-- Hashes are better suited for duplicate detection, cache keys, content-change
-  checks, and index consistency.
+- 删除应该以 `document_id` 为主，而不是 content hash。
+- hash 不是业务主键。同一份内容可能因为不同用途被上传多次，如果用 hash 删除，容易误删多个逻辑文档。
+- hash 更适合用于：
+  - 重复上传检测
+  - 缓存 key
+  - 内容是否变更的判断
+  - 外部索引一致性校验
 
-Implementation:
+实现：
 
-- PostgreSQL deletes are keyed by `Document.id`.
-- Parsed sections and chunks are related through `document_id` with cascade
-  behavior.
-- Stored file deletion is driven by the deleted document's `file_path`, with an
-  upload-directory safety check.
+- PostgreSQL 删除以 `Document.id` 为入口。
+- `document_sections` 和 `document_chunks` 都通过 `document_id` 关联，并依赖级联删除。
+- 本地文件删除通过当前 `Document.file_path` 执行，并做上传目录安全检查。
 
-Deferred work:
+延迟项：
 
-- Later Milvus vectors, Elasticsearch documents, and Neo4j graph nodes should
-  also store `document_id` in metadata/properties.
-- A future delete flow should remove external index records by `document_id`.
+- 后续 Milvus vectors、Elasticsearch documents、Neo4j graph nodes 都应该在 metadata/properties 中保存 `document_id`。
+- 未来删除 Document 时，需要按 `document_id` 删除外部索引中的记录。
 
-### Phase 3 Current Scope
+### Phase 3 当前范围
 
-Implemented now:
+目前已经实现：
 
-- Upload or paste document.
-- Store raw file.
-- Parse text.
-- Create parent sections and child chunks.
-- Create or attach resume profile/version records.
-- Delete document plus local parsed corpus.
-- Delete resume profile/version without deleting raw documents.
-- Reattach existing resume documents to resume profiles.
+- 上传或粘贴 Document。
+- 原始文件落盘。
+- 文本解析。
+- Parent Section 切分。
+- Child Chunk 切分。
+- 自动创建或关联 Resume Profile / Resume Version。
+- 删除 Document，并清理本地文件和本地解析语料。
+- 删除 Resume Profile / Resume Version，但不删除原始 Document。
+- 将已有 resume Document 重新关联到 Resume Profile。
 
-Intentionally deferred:
+当前有意延迟：
 
-- Layout-aware PDF parsing.
-- Deduplication by content hash.
-- Milvus vector deletion.
-- Elasticsearch document deletion.
-- Neo4j graph deletion.
-- A richer UI confirmation modal.
-- Full audit log for delete operations.
+- 更强的 PDF 版面解析。
+- 基于 content hash 的重复上传检测。
+- Milvus vector 删除。
+- Elasticsearch document 删除。
+- Neo4j graph 删除。
+- 更完整的删除确认弹窗。
+- 删除操作审计日志。
 
-### Rule For Future Phases
+### 后续阶段维护规则
 
-Every phase should update this document when:
+之后每个阶段都应该在这个文档中记录：
 
-- A model boundary changes.
-- A UX confusion appears during manual testing.
-- A deletion, recovery, or data ownership rule is clarified.
-- A placeholder is intentionally kept.
-- An implementation is deferred to a later phase.
+- 数据模型边界是否发生变化。
+- 手动测试中出现了哪些 UX 困惑。
+- 删除、恢复、数据归属规则是否被澄清。
+- 哪些地方只是当前阶段的最小实现。
+- 哪些能力被明确延迟到了后续阶段。
