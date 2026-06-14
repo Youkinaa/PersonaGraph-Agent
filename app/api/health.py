@@ -16,14 +16,14 @@ router = APIRouter(tags=["health"])
 async def health(settings: Settings = Depends(get_settings)) -> dict:
     return {
         "status": "ok",
-        "phase": "phase_3_document_ingestion",
+        "phase": settings.app_phase,
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "app": settings.public_summary(),
     }
 
 
 @router.get("/health/dependencies")
-def dependency_health() -> dict:
+def dependency_health(settings: Settings = Depends(get_settings)) -> dict:
     checks = {
         "database": check_database(),
         "redis": check_redis(),
@@ -31,7 +31,7 @@ def dependency_health() -> dict:
     status_value = "ok" if all(item["status"] == "ok" for item in checks.values()) else "degraded"
     return {
         "status": status_value,
-        "phase": "phase_3_document_ingestion",
+        "phase": settings.app_phase,
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "checks": checks,
     }

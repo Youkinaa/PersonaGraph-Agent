@@ -48,7 +48,7 @@
 
   <article class="panel">
     <h2>Dependency Checks</h2>
-    <p>Phase 1 validates the career platform can reach PostgreSQL and Redis.</p>
+    <p>Validate the runtime dependencies used by document parsing, indexing, and retrieval.</p>
     <div class="actions">
       <button
         class="button"
@@ -63,11 +63,11 @@
   </article>
 
   <article class="panel panel-wide">
-    <h2>Next Build Slice</h2>
+    <h2>Current Build Slice</h2>
     <dl class="compact-list">
-      <div><dt>Career Data</dt><dd>Resume versions, JD records, applications, goals, and job subscriptions</dd></div>
       <div><dt>Documents</dt><dd>Resume and JD upload with parent sections and child chunks</dd></div>
-      <div><dt>Workers</dt><dd>Move parsing, indexing, and job discovery into background tasks</dd></div>
+      <div><dt>Indexing</dt><dd>Elasticsearch BM25 and Milvus vector indexing with local fallback</dd></div>
+      <div><dt>Retrieval</dt><dd>RRF fusion, parent fetch, and Evidence Pack inspection</dd></div>
     </dl>
   </article>
 </section>

@@ -85,9 +85,38 @@
           <strong>{{ document.title }}</strong>
           <span>{{ document.doc_type }} / parse={{ document.parse_status }} / index={{ document.index_status }}</span>
           <span>{{ document.sections | length }} sections / {{ document.chunks | length }} chunks</span>
+          <span>parse version={{ document.metadata_.parse_version | default("legacy", true) }}</span>
+          <span>index version={{ document.metadata_.index_version | default("not indexed", true) }}</span>
           <span>{{ document.source_type }}</span>
         </div>
         <div class="item-actions">
+          <form class="inline-form" method="post" action="/documents/{{ document.id }}/reparse">
+            <button
+              class="button button-secondary"
+              type="submit"
+              {% if not document.file_path %}disabled{% endif %}
+            >
+              Re-parse
+            </button>
+          </form>
+          <form class="inline-form" method="post" action="/documents/{{ document.id }}/index">
+            <button
+              class="button button-secondary"
+              type="submit"
+              {% if document.parse_status != "parsed" %}disabled{% endif %}
+            >
+              Index
+            </button>
+          </form>
+          <form class="inline-form" method="post" action="/documents/{{ document.id }}/reindex">
+            <button
+              class="button button-secondary"
+              type="submit"
+              {% if document.parse_status != "parsed" %}disabled{% endif %}
+            >
+              Re-index
+            </button>
+          </form>
           <form
             class="inline-form"
             method="post"

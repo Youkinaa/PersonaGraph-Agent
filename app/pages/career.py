@@ -21,13 +21,14 @@ def redirect_to(path: str) -> RedirectResponse:
 
 @router.get("/resumes")
 def resumes_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="career/resumes.html",
         context={
             "request": request,
-            "settings": get_settings(),
-            "phase": "Phase 2",
+            "settings": settings,
+            "phase": settings.app_phase_label,
             "profiles": service.list_resume_profiles(db),
             "resume_documents": document_service.list_documents(db, limit=100, doc_type="resume"),
         },
@@ -82,13 +83,14 @@ def delete_resume_version(version_id: str, db: Session = Depends(get_db)):
 
 @router.get("/jobs")
 def jobs_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="career/jobs.html",
         context={
             "request": request,
-            "settings": get_settings(),
-            "phase": "Phase 2",
+            "settings": settings,
+            "phase": settings.app_phase_label,
             "job_postings": service.list_job_postings(db),
             "job_subscriptions": service.list_job_subscriptions(db),
         },
@@ -143,13 +145,14 @@ def create_job_subscription(
 
 @router.get("/applications")
 def applications_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="career/applications.html",
         context={
             "request": request,
-            "settings": get_settings(),
-            "phase": "Phase 2",
+            "settings": settings,
+            "phase": settings.app_phase_label,
             "applications": service.list_applications(db),
             "job_postings": service.list_job_postings(db, limit=100),
             "resume_versions": service.list_resume_versions(db, limit=100),
@@ -181,13 +184,14 @@ def create_application(
 
 @router.get("/goals")
 def goals_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="career/goals.html",
         context={
             "request": request,
-            "settings": get_settings(),
-            "phase": "Phase 2",
+            "settings": settings,
+            "phase": settings.app_phase_label,
             "career_goals": service.list_career_goals(db),
             "learning_goals": service.list_learning_goals(db),
         },
@@ -236,13 +240,14 @@ def create_learning_goal(
 
 @router.get("/notifications")
 def notifications_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="career/notifications.html",
         context={
             "request": request,
-            "settings": get_settings(),
-            "phase": "Phase 2",
+            "settings": settings,
+            "phase": settings.app_phase_label,
             "notifications": service.list_notifications(db),
         },
     )

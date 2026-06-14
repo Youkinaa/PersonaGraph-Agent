@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import get_settings
 from app.db.models import Document, DocumentChunk, DocumentSection
 from app.domains.documents.parser import read_text_from_path, split_child_chunks, split_parent_sections
+from app.domains.rag.versioning import build_parse_strategy, current_parse_version
 
 
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".markdown", ".text", ".pdf"}
@@ -107,16 +108,26 @@ def parse_document(db: Session, document_id: str) -> dict:
     if not document.file_path:
         raise ValueError("Document has no file path to parse.")
 
+    settings = get_settings()
+    parse_strategy = build_parse_strategy(settings)
+    parse_version = current_parse_version(settings)
     document.parse_status = "parsing"
     document.index_status = "not_indexed"
     db.commit()
+
+    try:
+        from app.domains.rag.service import delete_document_indexes
+
+        delete_document_indexes(document.id)
+    except Exception:
+        pass
 
     db.query(DocumentChunk).filter(DocumentChunk.document_id == document.id).delete()
     db.query(DocumentSection).filter(DocumentSection.document_id == document.id).delete()
     db.flush()
 
     text = read_text_from_path(Path(document.file_path))
-    sections = split_parent_sections(text)
+    sections = split_parent_sections(text, target_size=settings.document_parent_target_chars)
     chunk_count = 0
 
     for section_data in sections:
@@ -134,7 +145,11 @@ def parse_document(db: Session, document_id: str) -> dict:
         db.add(section)
         db.flush()
 
-        for chunk_data in split_child_chunks(section_data.content):
+        for chunk_data in split_child_chunks(
+            section_data.content,
+            chunk_size=settings.document_child_chunk_size,
+            overlap=settings.document_child_chunk_overlap,
+        ):
             chunk = DocumentChunk(
                 document_id=document.id,
                 section_id=section.id,
@@ -148,7 +163,10 @@ def parse_document(db: Session, document_id: str) -> dict:
                 embedding_status="pending",
                 bm25_status="pending",
                 graph_status="pending",
-                metadata_={"section_chunk_index": chunk_data.chunk_index},
+                metadata_={
+                    "section_chunk_index": chunk_data.chunk_index,
+                    "parse_version": parse_version,
+                },
             )
             db.add(chunk)
             chunk_count += 1
@@ -159,6 +177,14 @@ def parse_document(db: Session, document_id: str) -> dict:
         **(document.metadata_ or {}),
         "section_count": len(sections),
         "chunk_count": chunk_count,
+        "parse_version": parse_version,
+        "parse_strategy": parse_strategy,
+        "parse_pipeline": {
+            "text_extraction_mode": settings.document_text_extraction_mode,
+            "ocr_reserved": settings.document_ocr_enabled,
+            "multimodal_reserved": settings.document_multimodal_enabled,
+            "audio_supported": False,
+        },
     }
     db.commit()
     db.refresh(document)
@@ -185,12 +211,16 @@ def delete_document(db: Session, document_id: str) -> dict | None:
     if document is None:
         return None
 
+    from app.domains.rag.service import delete_document_indexes
+
+    index_cleanup = delete_document_indexes(document_id)
     file_deleted = delete_stored_file(document.file_path)
     db.delete(document)
     db.commit()
     return {
         "document_id": document_id,
         "file_deleted": file_deleted,
+        "index_cleanup": index_cleanup,
     }
 
 

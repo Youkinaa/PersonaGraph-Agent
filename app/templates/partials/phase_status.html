@@ -7,10 +7,14 @@
   <strong>{{ summary.app_version if summary is defined else settings.app_version }}</strong>
 </div>
 <div class="metric">
+  <span>Phase</span>
+  <strong>{{ summary.app_phase_label if summary is defined else settings.app_phase_label }}</strong>
+</div>
+<div class="metric">
   <span>LLM Key</span>
   <strong>{{ "configured" if (summary.has_llm_api_key if summary is defined else settings.llm_api_key) else "missing" }}</strong>
 </div>
 <div class="metric">
-  <span>Search Key</span>
-  <strong>{{ "configured" if (summary.has_serpapi_api_key if summary is defined else settings.serpapi_api_key) else "missing" }}</strong>
+  <span>Embedding</span>
+  <strong>{{ summary.embedding_model_id if summary is defined else settings.embedding_model_id }}</strong>
 </div>

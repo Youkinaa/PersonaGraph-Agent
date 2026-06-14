@@ -27,6 +27,7 @@ class TextDocumentCreate(BaseModel):
 
 
 def serialize_document(document) -> dict:
+    metadata = document.metadata_ or {}
     return {
         "id": document.id,
         "title": document.title,
@@ -34,6 +35,8 @@ def serialize_document(document) -> dict:
         "source_type": document.source_type,
         "parse_status": document.parse_status,
         "index_status": document.index_status,
+        "parse_version": metadata.get("parse_version"),
+        "index_version": metadata.get("index_version"),
         "section_count": len(document.sections) if getattr(document, "sections", None) is not None else None,
         "chunk_count": len(document.chunks) if getattr(document, "chunks", None) is not None else None,
     }
@@ -58,6 +61,19 @@ def delete_document(document_id: str, db: Session = Depends(get_db)) -> dict:
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
     return {"deleted": True, **result}
+
+
+@router.post("/{document_id}/parse", status_code=status.HTTP_202_ACCEPTED)
+def reparse_document(document_id: str, db: Session = Depends(get_db)) -> dict:
+    document = document_service.get_document(db, document_id)
+    if document is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
+    task_run = enqueue_parse_document(db, document.id)
+    return {
+        "document_id": document.id,
+        "task_run_id": task_run.id,
+        "celery_task_id": task_run.celery_task_id,
+    }
 
 
 @router.post("/upload", status_code=status.HTTP_202_ACCEPTED)

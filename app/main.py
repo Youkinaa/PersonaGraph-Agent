@@ -6,12 +6,14 @@ from fastapi.staticfiles import StaticFiles
 from app.api.career import router as career_router
 from app.api.documents import router as document_router
 from app.api.health import router as health_router
+from app.api.rag import router as rag_router
 from app.api.tasks import router as task_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import RequestIdMiddleware, configure_logging
 from app.pages.career import router as career_page_router
 from app.pages.documents import router as document_page_router
+from app.pages.rag import router as rag_page_router
 from app.pages.router import router as page_router
 
 
@@ -31,9 +33,11 @@ def create_app() -> FastAPI:
     app.include_router(career_router)
     app.include_router(document_router)
     app.include_router(health_router)
+    app.include_router(rag_router)
     app.include_router(task_router)
     app.include_router(career_page_router)
     app.include_router(document_page_router)
+    app.include_router(rag_page_router)
     app.include_router(page_router)
 
     return app

@@ -10,4 +10,5 @@ psycopg[binary]==3.2.3
 redis==5.2.1
 celery[redis]==5.4.0
 pypdf==5.1.0
+pymilvus>=2.4,<3
 pytest==8.3.4

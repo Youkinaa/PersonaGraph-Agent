@@ -4,6 +4,9 @@ This project is built in small, verifiable phases. Each phase should keep the
 system runnable and document what is real, what is a placeholder, and what comes
 next.
 
+Detailed current planning is maintained in `docs/project_roadmap.md`. This file
+keeps the historical stage summary.
+
 ## Phase 0: Foundation
 
 Implemented:
@@ -106,13 +109,28 @@ Current placeholders:
 
 ## Phase 4: Hybrid RAG
 
-Planned:
+Implemented:
 
-- Milvus collection for child chunk embeddings.
-- Elasticsearch index for BM25/full-text retrieval.
+- Config-driven global phase label and phase slug.
+- Elasticsearch index adapter for chunk BM25/full-text retrieval.
+- Milvus collection adapter for child chunk vector retrieval.
+- `text-embedding-v4` embedding provider through the OpenAI-compatible API.
+- Deterministic local hashing embedding as a fallback/test implementation.
+- Per-document indexing task and `/documents` page index action.
+- `/api/rag/search` endpoint.
+- `/rag` page for fused Evidence Pack inspection.
 - RRF fusion.
 - Parent fetch from PostgreSQL.
-- Evidence Pack for resume/JD matching.
+- Local PostgreSQL keyword fallback when ES or Milvus is unavailable.
+- Evidence Pack for downstream resume/JD matching.
+
+Current placeholders:
+
+- Embedding quality now depends on `text-embedding-v4`; local hashing is only a
+  fallback path when the embedding API is unavailable.
+- External index cleanup on document delete is not implemented yet.
+- Reranking is not implemented yet.
+- Graph expansion is deferred to Phase 5.
 
 ## Phase 5: Career GraphRAG
 

@@ -167,11 +167,22 @@ p {
   outline-offset: 2px;
 }
 
+.button:disabled {
+  border-color: var(--line);
+  background: #e7eaf0;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .status-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-top: 20px;
+}
+
+.status-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .metric {
@@ -260,6 +271,11 @@ p {
 .state-ok,
 .state-succeeded {
   color: var(--accent);
+}
+
+.state-degraded,
+.state-unavailable {
+  color: #b54708;
 }
 
 .state-error,

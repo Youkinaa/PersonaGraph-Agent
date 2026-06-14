@@ -11,6 +11,7 @@ from app.domains.career import service as career_service
 from app.domains.documents.career_links import link_document_to_career
 from app.domains.documents import service as document_service
 from app.domains.documents.jobs import enqueue_parse_document
+from app.domains.rag.jobs import enqueue_index_document, enqueue_reindex_document
 
 
 templates = Jinja2Templates(directory=str(get_settings().templates_dir))
@@ -23,13 +24,14 @@ def redirect_to(path: str) -> RedirectResponse:
 
 @router.get("/documents")
 def documents_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="documents/index.html",
         context={
             "request": request,
-            "settings": get_settings(),
-            "phase": "Phase 3",
+            "settings": settings,
+            "phase": settings.app_phase_label,
             "documents": document_service.list_documents(db),
             "counts": document_service.count_documents(db),
             "profiles": career_service.list_resume_profiles(db, limit=100),
@@ -104,4 +106,22 @@ def create_text_document_page(
 @router.post("/documents/{document_id}/delete")
 def delete_document_page(document_id: str, db: Session = Depends(get_db)):
     document_service.delete_document(db, document_id)
+    return redirect_to("/documents")
+
+
+@router.post("/documents/{document_id}/index")
+def index_document_page(document_id: str, db: Session = Depends(get_db)):
+    enqueue_index_document(db, document_id)
+    return redirect_to("/documents")
+
+
+@router.post("/documents/{document_id}/reindex")
+def reindex_document_page(document_id: str, db: Session = Depends(get_db)):
+    enqueue_reindex_document(db, document_id)
+    return redirect_to("/documents")
+
+
+@router.post("/documents/{document_id}/reparse")
+def reparse_document_page(document_id: str, db: Session = Depends(get_db)):
+    enqueue_parse_document(db, document_id)
     return redirect_to("/documents")
