@@ -1,3 +1,7 @@
+import logging
+from types import SimpleNamespace
+
+from app.domains.rag import embeddings as embedding_module
 from app.domains.rag.embeddings import hash_embed_text
 from app.domains.rag.fusion import reciprocal_rank_fusion
 from app.domains.rag.rerankers import (
@@ -18,6 +22,30 @@ def test_hash_embedding_is_deterministic() -> None:
     assert first == second
     assert len(first) == 16
     assert any(value != 0 for value in first)
+
+
+def test_embedding_fallback_logs_warning(monkeypatch, caplog) -> None:
+    class FailingEmbeddingClient:
+        def __init__(self, settings) -> None:
+            self.settings = settings
+
+        def embed_texts(self, texts: list[str]) -> list[list[float]]:
+            raise RuntimeError("provider unavailable")
+
+    settings = SimpleNamespace(
+        rag_embedding_provider="openai_compatible",
+        rag_embedding_fallback_to_hash=True,
+        rag_embedding_dim=8,
+        embedding_model_id="text-embedding-v4",
+    )
+    monkeypatch.setattr(embedding_module, "OpenAICompatibleEmbeddingClient", FailingEmbeddingClient)
+
+    with caplog.at_level(logging.WARNING, logger=embedding_module.__name__):
+        vectors = embedding_module.embed_texts(["LangGraph RAG"], settings=settings)
+
+    assert len(vectors) == 1
+    assert len(vectors[0]) == 8
+    assert "falling back to local hash embeddings" in caplog.text
 
 
 def test_reciprocal_rank_fusion_merges_sources() -> None:

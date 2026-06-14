@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import shutil
 from pathlib import Path
@@ -17,6 +18,7 @@ from app.domains.rag.versioning import build_parse_strategy, current_parse_versi
 
 
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".markdown", ".text", ".pdf"}
+logger = logging.getLogger(__name__)
 
 
 def safe_filename(filename: str) -> str:
@@ -119,8 +121,12 @@ def parse_document(db: Session, document_id: str) -> dict:
         from app.domains.rag.service import delete_document_indexes
 
         delete_document_indexes(document.id)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning(
+            "Document index cleanup failed before reparsing; continuing with local parse. document_id=%s error=%s",
+            document.id,
+            exc,
+        )
 
     db.query(DocumentChunk).filter(DocumentChunk.document_id == document.id).delete()
     db.query(DocumentSection).filter(DocumentSection.document_id == document.id).delete()

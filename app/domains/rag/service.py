@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 from sqlalchemy import desc, func, select
@@ -18,6 +19,9 @@ from app.domains.rag.versioning import (
     current_parse_version,
     document_version_status,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def build_chunk_records(document: Document) -> list[ChunkRecord]:
@@ -85,11 +89,25 @@ def index_document(db: Session, document_id: str) -> dict:
         results["elasticsearch"] = ElasticsearchChunkIndex(settings).index_chunks(records)
     except Exception as exc:
         errors["elasticsearch"] = str(exc)
+        logger.warning(
+            "Elasticsearch indexing failed; document will fall back to non-BM25 availability. "
+            "document_id=%s chunk_count=%s error=%s",
+            document.id,
+            len(records),
+            exc,
+        )
 
     try:
         results["milvus"] = MilvusChunkIndex(settings).index_chunks(records)
     except Exception as exc:
         errors["milvus"] = str(exc)
+        logger.warning(
+            "Milvus indexing failed; document will fall back to non-vector availability. "
+            "document_id=%s chunk_count=%s error=%s",
+            document.id,
+            len(records),
+            exc,
+        )
 
     es_ok = "elasticsearch" in results
     milvus_ok = "milvus" in results
@@ -197,11 +215,13 @@ def delete_document_indexes(document_id: str) -> dict:
         results["elasticsearch"] = ElasticsearchChunkIndex(settings).delete_document(document_id)
     except Exception as exc:
         errors["elasticsearch"] = str(exc)
+        logger.warning("Elasticsearch index cleanup failed. document_id=%s error=%s", document_id, exc)
 
     try:
         results["milvus"] = MilvusChunkIndex(settings).delete_document(document_id)
     except Exception as exc:
         errors["milvus"] = str(exc)
+        logger.warning("Milvus index cleanup failed. document_id=%s error=%s", document_id, exc)
 
     return {
         "document_id": document_id,
@@ -287,6 +307,13 @@ def search_documents(
         retrievers["bm25"] = len(bm25_hits)
     except Exception as exc:
         errors["bm25"] = str(exc)
+        logger.warning(
+            "BM25 retriever failed; search will rely on remaining retrievers and local fallback. "
+            "query=%r doc_type=%s error=%s",
+            query,
+            doc_type,
+            exc,
+        )
 
     try:
         vector_hits = MilvusChunkIndex(settings).search(query, top_k=candidate_count)
@@ -296,6 +323,13 @@ def search_documents(
         retrievers["vector"] = len(vector_hits)
     except Exception as exc:
         errors["vector"] = str(exc)
+        logger.warning(
+            "Vector retriever failed; search will rely on remaining retrievers and local fallback. "
+            "query=%r doc_type=%s error=%s",
+            query,
+            doc_type,
+            exc,
+        )
 
     local_hits = local_keyword_search(db, query, top_k=candidate_count, doc_type=doc_type)
     result_sets.append(local_hits)
@@ -317,6 +351,13 @@ def search_documents(
             errors["rerank"] = str(exc)
             reranker["status"] = "failed"
             reranker["fallback"] = "rrf"
+            logger.warning(
+                "Rerank failed; falling back to RRF order. query=%r candidate_count=%s top_k=%s error=%s",
+                query,
+                len(evidence_candidates),
+                top_k,
+                exc,
+            )
             evidence = evidence_candidates[:top_k]
     else:
         evidence = evidence_candidates[:top_k]

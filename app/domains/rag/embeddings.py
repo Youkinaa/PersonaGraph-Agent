@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import math
 import re
 from collections.abc import Iterable
@@ -10,6 +11,7 @@ import httpx
 from app.core.config import Settings, get_settings
 
 
+logger = logging.getLogger(__name__)
 TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_+#.-]+|[\u4e00-\u9fff]{2,}")
 
 
@@ -59,6 +61,15 @@ def embed_texts(texts: list[str], settings: Settings | None = None) -> list[list
     except Exception as exc:
         if not settings.rag_embedding_fallback_to_hash:
             raise
+        logger.warning(
+            "Embedding provider failed; falling back to local hash embeddings. provider=%s model=%s "
+            "dimension=%s text_count=%s error=%s",
+            settings.rag_embedding_provider,
+            settings.embedding_model_id,
+            settings.rag_embedding_dim,
+            len(texts),
+            exc,
+        )
         return [hash_embed_text(text, settings.rag_embedding_dim) for text in texts]
 
 

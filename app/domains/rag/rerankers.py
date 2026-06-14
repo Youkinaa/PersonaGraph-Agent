@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
 
 from app.core.config import Settings, get_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 class RerankProviderError(RuntimeError):
@@ -83,9 +87,19 @@ def apply_rerank_results(
         if len(ranked) >= top_k:
             return ranked
 
+    fallback_logged = False
     for original_index, item in enumerate(evidence):
         if original_index in used_indexes:
             continue
+        if not fallback_logged:
+            logger.warning(
+                "Rerank returned fewer usable results than requested; filling remaining evidence with RRF fallback. "
+                "usable_rerank_results=%s evidence_count=%s top_k=%s",
+                len(used_indexes),
+                len(evidence),
+                top_k,
+            )
+            fallback_logged = True
         updated = dict(item)
         updated["rank_source"] = "rrf_fallback"
         updated["final_rank"] = len(ranked)
@@ -148,6 +162,15 @@ class OpenAICompatibleRerankClient:
                     return self._request(endpoint, query, documents, top_n, include_instruct=include_instruct)
                 except RerankProviderError as exc:
                     last_error = str(exc)
+                    logger.warning(
+                        "Rerank request attempt failed; trying fallback endpoint or payload when available. "
+                        "endpoint=%s include_instruct=%s model=%s document_count=%s error=%s",
+                        endpoint,
+                        include_instruct,
+                        self.model_id,
+                        len(documents),
+                        exc,
+                    )
                     if "status 404" not in last_error and "status 405" not in last_error and include_instruct is False:
                         raise
         raise RerankProviderError(last_error or "Rerank request failed.")
